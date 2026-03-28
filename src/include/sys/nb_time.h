@@ -1,0 +1,1 @@
+../netbsd/sys/time.h
