@@ -8,4 +8,4 @@ NetBSD utils but there OpenBSD based too (and maybe FreeBSD in future).
 - libacl
 
 # Building 
-´bmake´
+`bmake`
