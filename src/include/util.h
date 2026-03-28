@@ -56,5 +56,7 @@ char *strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominato
 char *strspct(char *buf, size_t bufsiz, intmax_t numerator, intmax_t denominator, size_t digits);
 char * flags_to_string(u_long flags, const char *def);
 int string_to_flags(char **stringp, u_long *setp, u_long *clrp);
+int (expand_number)(const char *buf, int64_t *num);
+int expand_unsigned(const char *buf, uint64_t *num);
 
 #endif

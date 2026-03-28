@@ -1,4 +1,3 @@
-PROG=df
-LDADD += -lnutil
+PROG= nproc
 
 .include "../../mk/prog.mk"

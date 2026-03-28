@@ -1,4 +1,3 @@
-PROG=df
-LDADD += -lnutil
+PROG= hostid
 
 .include "../../mk/prog.mk"

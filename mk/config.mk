@@ -1,7 +1,7 @@
 TOP ?= ..
 CC ?= clang
 
-LIBPATH =-L$(TOP)/libnetbsd -L$(TOP)/libutil
+LIBPATH =-L$(TOP)/libcompat -L$(TOP)/libutil
 LCFLAGS ?=
 LLDFLAGS ?=
 
@@ -10,11 +10,10 @@ CPPFLAGS +=-I$(TOP)/include
 LDFLAGS += $(LIBPATH)
 MAKEFLAGS += -j$(nproc)
 LDADD ?=
-LDLIBS += $(LDADD) -lnetbsd
+LDLIBS += $(LDADD) -lcompat
 
 DESTDIR ?= 
 PREFIX ?= usr/local
 LIBDIR ?= $(PREFIX)/lib
-INCDIR ?= $(PREFIX)/include/netbsd/
 
 #.SILENT:

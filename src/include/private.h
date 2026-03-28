@@ -148,7 +148,6 @@
 #endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
 /* Enable tm_gmtoff, tm_zone, and environ on GNUish systems.  */
-#define _GNU_SOURCE 1
 /* Fix asctime_r on Solaris 11.  */
 #define _POSIX_PTHREAD_SEMANTICS 1
 /* Enable strtoimax on pre-C99 Solaris 11.  */

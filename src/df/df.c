@@ -65,12 +65,12 @@ __RCSID("$NetBSD: df.c,v 1.101.2.1 2023/12/18 14:17:42 martin Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <mntent.h>
 #include <util.h>
 
 #include "nb_stdlib.h"
 #include "sys/nb_stat.h"
 #include "compat.h"
-#include "df.h"
 
 struct mntinfo {
     unsigned long int f_frsize;
@@ -109,6 +109,11 @@ __dead static void usage(void);
 static void	 prthumanval(int64_t, int);
 static void	 prthuman(const struct statvfs *, int64_t, int64_t);
 
+static size_t    regetmntinfo(struct mntinfo **, size_t);
+static int        getmntinfo(struct mntinfo **);
+static int        checkvfsselected(char *);
+static int checkvfsname(const char *, const char **, int );
+
 static int	 aflag, cflag, fflag, gflag, hflag, iflag, lflag;
 static int	 Nflag, nflag, Pflag, Wflag;
 static long	 usize;
@@ -120,7 +125,8 @@ static size_t	 mntcount;
 static int blksize_width = WIDTH_BLKSIZE;
 
 static int fudgeunits = 0;
-
+static int        skipvfs_l, skipvfs_t;
+static const char **vfslist_l, **vfslist_t;
 
 int
 main(int argc, char *argv[])
@@ -380,7 +386,7 @@ maketypelist(char *fslist)
  * filesystem types not in ``fsmask'' and possibly re-stating to get
  * current (not cached) info.  Returns the new count of valid statvfs bufs.
  */
-static size_t
+size_t
 regetmntinfo(struct mntinfo **mntbufp, size_t count)
 {
 	size_t i, j;
@@ -662,6 +668,108 @@ prtstat(struct mntinfo *sfps, int maxwidth)
 		    strspct(pb, sizeof(pb), used, inodes, 0));
 	}
 	(void)printf(" %s\n", sfps->f_mntonname);
+}
+
+int
+getmntinfo(struct mntinfo **mntbuf)
+{
+    struct mntinfo *list = NULL;
+    struct mntinfo *cur;
+    struct mntent *ent;
+    struct statvfs sv;
+    struct stat st;
+    FILE *fp;
+    int n = 0;
+
+    fp = setmntent("/proc/self/mounts", "r");
+    if (fp == NULL)
+        err(1, "setmntent");
+
+    while ((ent = getmntent(fp)) != NULL) {
+
+        if (hasmntopt(ent, MNTTYPE_IGNORE))
+            continue;
+
+        if (vfslist_l || vfslist_t) {
+            if (checkvfsselected(ent->mnt_type) != 0)
+                continue;
+        }
+
+        if (statvfs(ent->mnt_dir, &sv) == -1)
+            continue;
+
+        if (stat(ent->mnt_dir, &st) == -1)
+            continue;
+
+        list = realloc(list, (n + 1) * sizeof(*list));
+        if (!list)
+            err(1, "realloc");
+
+        cur = &list[n];
+
+        memset(cur, 0, sizeof(*cur));
+
+        cur->f_fstypename = strdup(ent->mnt_type);
+        cur->f_mntfromname = strdup(ent->mnt_fsname);
+        cur->f_mntonname = strdup(ent->mnt_dir);
+        cur->f_opts = strdup(ent->mnt_opts);
+
+        cur->f_blocks = sv.f_blocks;
+        cur->f_bfree  = sv.f_bfree;
+        cur->f_bavail = sv.f_bavail;
+        cur->f_files  = sv.f_files;
+        cur->f_ffree  = sv.f_ffree;
+        cur->f_bsize  = sv.f_bsize;
+        cur->f_frsize = sv.f_frsize;
+        cur->f_flag   = sv.f_flag;
+        cur->f_namemax = sv.f_namemax;
+
+        /* stat */
+        cur->f_dev = st.st_dev;
+
+        cur->f_selected = 1;
+
+        n++;
+    }
+
+    endmntent(fp);
+
+    *mntbuf = list;
+    return n;
+}
+
+int
+checkvfsname(const char *vfsname, const char **vfslist, int skip)
+{
+
+	if (vfslist == NULL)
+		return (0);
+	while (*vfslist != NULL) {
+		if (strcmp(vfsname, *vfslist) == 0)
+			return (skip);
+		++vfslist;
+	}
+	return (!skip);
+}
+
+int
+checkvfsselected(char *fstypename)
+{
+	int result;
+
+	if (vfslist_t) {
+		/* if -t option used then select passed types */
+		result = checkvfsname(fstypename, vfslist_t, skipvfs_t);
+		if (vfslist_l) {
+			/* if -l option then adjust selection */
+			if (checkvfsname(fstypename, vfslist_l, skipvfs_l) == skipvfs_t)
+				result = skipvfs_t;
+		}
+	} else {
+		/* no -t option then -l decides */
+		result = checkvfsname(fstypename, vfslist_l, skipvfs_l);
+	}
+	return (result);
 }
 
 static void

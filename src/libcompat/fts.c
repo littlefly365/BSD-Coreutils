@@ -29,13 +29,10 @@
  * SUCH DAMAGE.
  */
 
+#include "sys/nb_cdefs.h"
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-
-#define __RCSID(_s)
-#define __predict_false(exp)    __builtin_expect((exp) != 0, 0)
-#define      __RENAME(x)
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
@@ -58,18 +55,15 @@ __RCSID("$NetBSD: fts.c,v 1.52 2022/04/19 20:32:15 rillig Exp $");
 #include <unistd.h>
 
 #include "fts.h"
+#include "nb_stdlib.h"
+#include "nb_assert.h"
 
 #define SQRT_SIZE_MAX (((size_t)1) << (sizeof(size_t) * CHAR_BIT / 2))
-
-#ifndef _DIAGASSERT
-#define _DIAGASSERT(e)
-#endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
 #define	HAVE_STRUCT_DIRENT_D_NAMLEN
 #endif
 
-static int 	 reallocarr(void *ptr, size_t number, size_t size);
 static FTSENT	*fts_alloc(FTS *, const char *, size_t);
 static FTSENT	*fts_build(FTS *, int);
 static void	 fts_free(FTSENT *);
@@ -1248,42 +1242,3 @@ bail:
 	return ret;
 }
 
-static int
-reallocarr(void *ptr, size_t number, size_t size)
-{
-        int saved_errno, result;
-        void *optr;
-        void *nptr;
-
-        saved_errno = errno;
-        memcpy(&optr, ptr, sizeof(ptr));
-        if (number == 0 || size == 0) {
-                free(optr);
-                nptr = NULL;
-                memcpy(ptr, &nptr, sizeof(ptr));
-                errno = saved_errno;
-                return 0;
-        }
-
-        /*
-         * Try to avoid division here.
-         *
-         * It isn't possible to overflow during multiplication if neither
-         * operand uses any of the most significant half of the bits.
-         */
-        if (__predict_false((number|size) >= SQRT_SIZE_MAX &&
-                            number > SIZE_MAX / size)) {
-                errno = saved_errno;
-                return EOVERFLOW;
-        }
-
-        nptr = realloc(optr, number * size);
-        if (__predict_false(nptr == NULL)) {
-                result = errno;
-        } else {
-                result = 0;
-                memcpy(ptr, &nptr, sizeof(ptr));
-        }
-        errno = saved_errno;
-        return result;
-}
