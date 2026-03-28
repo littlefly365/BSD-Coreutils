@@ -16,7 +16,12 @@ clean:
 	@echo "===> ${dir}"
 	@${MAKE} -C ${dir} clean
 .endfor
-
+.if defined(IMPDIR)
+.for dir in ${IMPDIR}
+	@echo "===> ${dir}"
+	@${MAKE} -C ${dir} clean
+.endfor
+.endif
 install:
 .for dir in ${SUBDIR}
 	@echo "===> ${dir}"
