@@ -11,6 +11,7 @@ Other utilities are also modified a little bit to has extra function for replaci
 - libacl
 
 # Available 
+## command
 - arch
 - base64
 - basename
@@ -91,3 +92,24 @@ Other utilities are also modified a little bit to has extra function for replaci
 - wc
 - who
 - yes
+
+## symlink 
+- machine
+- chgrp
+- sum
+- md2
+- md4
+- md5
+- sha1
+- sha256
+- sha384
+- sha512
+- rmd160
+- od
+- whoami
+- groups
+- dir
+- vdir
+- readlink
+- tac
+- [
