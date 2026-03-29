@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+#include "nb_stdlib.h"
 
 #define MACHINE u.machine
 #define MACHINE_ARCH MACHINE
@@ -43,17 +44,14 @@ static int machine;
 int
 main(int argc, char *argv[])
 {
-	extern char *__progname;
 	int short_form = 0, c;
 	char *arch, *opts;
 	struct utsname u;
 
-	if (uname(&u) != 0) {
+	if (uname(&u) != 0) 
 		err(1, "uname");
-		return 1;
-	}
 
-	machine = strcmp(__progname, "machine") == 0;
+	machine = strcmp(getprogname(), "machine") == 0;
 	if (machine) {
 		arch = MACHINE;
 		opts = "a";
@@ -82,11 +80,11 @@ main(int argc, char *argv[])
 	
 	if (short_form) {
 		printf("%s\n", arch);
-		return (0);
 	} else {
-		printf("%s.%s\n", SYSTEM , arch);
-		return (0);	
+		printf("%s.%s\n", SYSTEM, arch);
 	}
+	
+	return (0);	
 }
 
 static void __dead

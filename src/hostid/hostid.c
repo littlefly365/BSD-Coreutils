@@ -20,11 +20,12 @@
  * OR IMPLIED WARRANTIES ARE DISCLAIMED.
  */
 
+#include "sys/nb_cdefs.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "nb_stdlib.h"
-#include "sys/nb_cdefs.h"
 
 __dead static void usage(void);
 

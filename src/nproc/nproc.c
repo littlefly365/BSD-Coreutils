@@ -20,12 +20,12 @@
  * OR IMPLIED WARRANTIES ARE DISCLAIMED.
  */
 
+#include "sys/nb_cdefs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
 #include "nb_stdlib.h"
-#include "sys/nb_cdefs.h"
 
 __dead static void usage();
 
@@ -37,9 +37,8 @@ main(int argc, char *argv[])
 
 	long nprocs = sysconf(_SC_NPROCESSORS_ONLN);
 
-	if (nprocs < 1){
+	if (nprocs < 1)
 		err(1, "nproc");
-	}
 
 	printf("%ld\n", nprocs);
 	return 0;
