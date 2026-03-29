@@ -156,6 +156,25 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
+	
+	if (strcmp(getprogname(), "dir") == 0) {
+		f_column = 1;
+                f_columnacross = f_longform = f_singlecol = f_stream = 0;
+
+		f_nonprint = 0;
+                f_octal = 0;
+              	f_octal_escape = 1;
+	}
+	else if (strcmp(getprogname(), "vdir") == 0) {
+		f_longform = 1;
+                f_column = f_columnacross = f_singlecol = f_stream = 0;
+                f_grouponly = -1;
+
+		f_nonprint = 0;
+                f_octal = 0;
+              	f_octal_escape = 1;
+	}
+
 	while ((ch = getopt(argc, argv, "1AaBbCcdFfghikLlMmnOoPpqRrSsTtuWwXx"))
 	    != -1) {
 		switch (ch) {
