@@ -43,7 +43,7 @@ __RCSID("$NetBSD: print.c,v 1.57 2020/05/17 23:34:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#ifndef SMALL
+#ifndef _NO_ACL
 #include <sys/acl.h>
 #include <acl/libacl.h>
 #endif
@@ -78,8 +78,10 @@ static void	printlink(FTSENT *);
 static void	printtime(time_t);
 static void	printtotal(DISPLAY *dp);
 static int	printtype(u_int);
-#ifndef SMALL
+#ifndef _NO_ACL
 static void	aclmode(char *, const FTSENT *);
+#else
+#define acl_free(x)
 #endif
 
 static time_t	now;
@@ -166,7 +168,7 @@ printlong(DISPLAY *dp)
 			}
 		}
 		(void)strmode(sp->st_mode, buf);
-#ifndef SMALL
+#ifndef _NO_ACL
 		aclmode(buf, p);
 #endif
 		np = p->fts_pointer;
@@ -511,7 +513,7 @@ printlink(FTSENT *p)
 		(void)printf("%s", path);
 }
 
-#ifndef SMALL
+#ifndef NO_ACL
 /*
  * Add a + after the standard rwxrwxrwx mode if the file has an
  * ACL. strmode() reserves space at the end of the string.
@@ -573,9 +575,11 @@ aclmode(char *buf, const FTSENT *p)
 		return;
 	}
 	if (acl_is_trivial_np(facl, &trivial)) {
+#ifndef _NO_ACL
 		acl_free(facl);
 		warn("%s", name);
 		return;
+#endif
 	}
 	if (!trivial)
 		buf[10] = '+';

@@ -43,7 +43,7 @@ __RCSID("$NetBSD: utils.c,v 1.49.6.1 2024/07/20 14:41:10 martin Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#ifndef SMALL
+#ifndef _NO_ACL
 #include <sys/acl.h>
 #endif
 
@@ -66,6 +66,12 @@ __RCSID("$NetBSD: utils.c,v 1.49.6.1 2024/07/20 14:41:10 martin Exp $");
 
 #define	MMAP_MAX_SIZE	(8 * 1048576)
 #define	MMAP_MAX_WRITE	(64 * 1024)
+
+#ifdef _NO_ACL
+#define acl_free(x)
+#define acl_get_file	0
+#define acl_set_file	0
+#endif
 
 int
 set_utimes(const char *file, struct stat *fs)
@@ -262,7 +268,7 @@ copy_file(FTSENT *entp, int dne)
 	if (pflag && (fcpxattr(from_fd, to_fd) != 0))
 		warn("%s: error copying extended attributes", to.p_path);
 
-#ifndef SMALL
+#ifndef _NO_ACL
 	if (pflag && preserve_fd_acls(from_fd, to_fd) != 0)
 		rval = 1;
 #endif
@@ -416,7 +422,7 @@ setfile(struct stat *fs, int fd)
 	return (rval);
 }
 
-#ifndef SMALL
+#ifndef NO_ACL
 int
 preserve_fd_acls(int source_fd, int dest_fd)
 {

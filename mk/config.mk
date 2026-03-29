@@ -16,4 +16,8 @@ DESTDIR ?=
 PREFIX ?= usr/local
 LIBDIR ?= $(PREFIX)/lib
 
+ACL ?= yes
+
+.export ACL
+
 .SILENT:
