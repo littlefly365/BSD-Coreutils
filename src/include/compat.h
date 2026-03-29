@@ -17,6 +17,10 @@
 #include <sys/types.h>
 #include <sys/acl.h>
 
+int compat_mkostemp(char *path, int oflags);
+int compat_mkstemp(char *path);
+char *compat_mkdtemp(char *path);
+
 #define fcpxattr
 #define setproctitle             
 #define  O_EXLOCK  	0

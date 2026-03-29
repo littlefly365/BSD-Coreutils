@@ -16,4 +16,4 @@ DESTDIR ?=
 PREFIX ?= usr/local
 LIBDIR ?= $(PREFIX)/lib
 
-#.SILENT:
+.SILENT:

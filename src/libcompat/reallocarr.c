@@ -91,4 +91,13 @@ reallocarr(void *ptr, size_t number, size_t size)
 	errno = saved_errno;
 	return result;
 }
+
+void *reallocf(void *ptr, size_t size) {
+    void *nptr = realloc(ptr, size);
+    if (!nptr && ptr && size) {
+        free(ptr);
+    }
+    return nptr;
+}
+
 #endif

@@ -9,7 +9,7 @@ prog: ${OBJS}
 	@echo "---${PROG}---"
 	$(CC) ${OBJS} ${LDFLAGS} ${LDLIBS} -o ${PROG}
 .c.o:
-	${CC} ${CPPFLAGS} ${CFLAGS} -c $< -o $@ >/dev/null
+	@${CC} ${CPPFLAGS} ${CFLAGS} -c $< -o $@ 
 clean:
 	@rm -rf ${PROG} ${OBJS}
 install:

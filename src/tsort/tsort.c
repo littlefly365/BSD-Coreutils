@@ -1,0 +1,490 @@
+/*	$NetBSD: tsort.c,v 1.26 2021/02/06 16:02:16 dbj Exp $	*/
+
+/*
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Michael Rendell of Memorial University of Newfoundland.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
+#include "sys/nb_cdefs.h"
+#if !defined(lint)
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
+#if 0
+static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
+#endif
+__RCSID("$NetBSD: tsort.c,v 1.26 2021/02/06 16:02:16 dbj Exp $");
+#endif /* not lint */
+
+#include <sys/types.h>
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include "nb_stdlib.h"
+#if !HAVE_NBTOOL_CONFIG_H
+#include <util.h>
+#endif
+
+/*
+ *  Topological sort.  Input is a list of pairs of strings separated by
+ *  white space (spaces, tabs, and/or newlines); strings are written to
+ *  standard output in sorted order, one per line.
+ *
+ *  usage:
+ *     tsort [-l] [inputfile]
+ *  If no input file is specified, standard input is read.
+ *
+ *  Should be compatible with AT&T tsort HOWEVER the output is not identical
+ *  (i.e. for most graphs there is more than one sorted order, and this tsort
+ *  usually generates a different one than the AT&T tsort).  Also, cycle
+ *  reporting seems to be more accurate in this version (the AT&T tsort
+ *  sometimes says a node is in a cycle when it isn't).
+ *
+ *  Michael Rendell, michael@stretch.cs.mun.ca - Feb 26, '90
+ */
+#define	HASHSIZE	53		/* doesn't need to be big */
+#define	NF_MARK		0x1		/* marker for cycle detection */
+#define	NF_ACYCLIC	0x2		/* this node is cycle free */
+#define	NF_NODEST	0x4		/* Unreachable */
+
+typedef struct node_str NODE;
+
+struct node_str {
+	NODE **n_prevp;			/* pointer to previous node's n_next */
+	NODE *n_next;			/* next node in graph */
+	NODE **n_arcs;			/* array of arcs to other nodes */
+	size_t n_narcs;			/* number of arcs in n_arcs[] */
+	size_t n_arcsize;		/* size of n_arcs[] array */
+	size_t n_refcnt;		/* # of arcs pointing to this node */
+	int n_flags;			/* NF_* */
+	char n_name[1];			/* name of this node */
+};
+
+typedef struct _buf {
+	char *b_buf;
+	size_t b_bsize;
+} BUF;
+
+#define HASH_CHUNK_SIZE 64
+#define HASH_BUCKET_COUNT 1024
+
+struct hash_elem {
+	NODE *elem;
+	struct hash_elem *next;
+};
+
+struct hash_chunk {
+	struct hash_elem elems[HASH_CHUNK_SIZE];
+	struct hash_chunk *next;
+};
+
+struct hash {
+	struct hash_elem **elems;
+	struct hash_chunk *chunks;
+	struct hash_elem *top;
+};
+
+static void hash_init(struct hash *h) {
+	h->chunks = NULL;
+	h->top = NULL;
+	h->elems = calloc(1024, sizeof(struct hash_elem *));
+}
+
+static void hash_destroy(struct hash *h) {
+	for (size_t i = 0; i < HASH_BUCKET_COUNT; ++i) {
+		struct hash_elem *e = h->elems[i];
+		while (e) {
+			free(e->elem->n_arcs);
+			free(e->elem);
+			e = e->next;
+		}
+	}
+	free(h->elems);
+	while (h->chunks) {
+		struct hash_chunk *c = h->chunks;
+		h->chunks = h->chunks->next;
+		free(c);
+	}
+}
+
+static size_t hash_key(char *key) {
+	size_t h = 5381;
+	for (size_t i = 0, k; (k = key[i]); ++i)
+		h = ((h << 5) + h) ^ k;
+	return h;
+}
+
+static NODE *hash_find(struct hash *h, char *key) {
+	size_t hash = hash_key(key) & (HASH_BUCKET_COUNT - 1);
+	for (struct hash_elem *c = h->elems[hash]; c; c = c->next) {
+		if (!strcmp(key, c->elem->n_name))
+			return c->elem;
+	}
+	return NULL;
+}
+
+static struct hash_elem *hash_insert(struct hash *h, char *key) {
+	size_t hash = hash_key(key) & (HASH_BUCKET_COUNT - 1);
+	if (!h->top) {
+		struct hash_chunk *c = calloc(1, sizeof(struct hash_chunk));
+		c->next = h->chunks;
+		h->chunks = c;
+		for (size_t i = 0; i < (HASH_CHUNK_SIZE - 1); ++i) 
+			c->elems[i].next = &c->elems[i + 1];
+		c->elems[HASH_CHUNK_SIZE - 1].next = h->top;
+		h->top = c->elems;
+	}
+	struct hash_elem *hc = h->top;
+	h->top = h->top->next;
+	hc->next = h->elems[hash];
+	h->elems[hash] = hc;
+	return hc;
+}
+
+static struct hash db;
+static NODE *graph, **cycle_buf, **longest_cycle;
+static int debug, longest, quiet, reverse;
+
+static void	 add_arc(char *, char *);
+static void	 clear_cycle(void);
+static size_t	 find_cycle(NODE *, NODE *, size_t, size_t);
+static NODE	*get_node(char *);
+static void	 remove_node(NODE *);
+static void	 tsort(void);
+__dead static void	 usage(void);
+
+int
+main(int argc, char *argv[])
+{
+	BUF *b;
+	int c, n, ch;
+	FILE *fp;
+	size_t bsize, nused;
+	BUF bufs[2];
+
+	setprogname(argv[0]);
+
+	fp = NULL;
+	while ((ch = getopt(argc, argv, "dlqr")) != -1)
+		switch (ch) {
+		case 'd':
+			debug = 1;
+			break;
+		case 'l':
+			longest = 1;
+			break;
+		case 'q':
+			quiet = 1;
+			break;
+		case 'r':
+			reverse = 1;
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+
+	switch (argc) {
+	case 0:
+		fp = stdin;
+		break;
+	case 1:
+		if ((fp = fopen(*argv, "r")) == NULL)
+			err(EXIT_FAILURE, "%s", *argv);
+		break;
+	default:
+		usage();
+	}
+
+	for (b = bufs, n = 2; n-- > 0; b++)
+		b->b_buf = erealloc(NULL, b->b_bsize = 1024);
+
+	hash_init(&db);
+	/* parse input and build the graph */
+	for (n = 0, c = getc(fp);;) {
+		while (c != EOF && isspace(c))
+			c = getc(fp);
+		if (c == EOF)
+			break;
+
+		nused = 0;
+		b = &bufs[n];
+		bsize = b->b_bsize;
+		do {
+			b->b_buf[nused++] = (char)c;
+			if (nused == bsize)
+				b->b_buf = erealloc(b->b_buf, bsize *= 2);
+			c = getc(fp);
+		} while (c != EOF && !isspace(c));
+
+		b->b_buf[nused] = '\0';
+		b->b_bsize = bsize;
+		if (n) {
+			if (reverse)
+				add_arc(bufs[1].b_buf, bufs[0].b_buf);
+			else
+				add_arc(bufs[0].b_buf, bufs[1].b_buf);
+		}
+		n = !n;
+	}
+	(void)fclose(fp);
+	if (n)
+		errx(EXIT_FAILURE, "odd data count");
+
+	/* do the sort */
+	tsort();
+	hash_destroy(&db);
+	return EXIT_SUCCESS;
+}
+
+/*
+ * add an arc from node s1 to node s2 in the graph.  If s1 or s2 are not in
+ * the graph, then add them.
+ */
+static void
+add_arc(char *s1, char *s2)
+{
+	NODE *n1;
+	NODE *n2;
+	size_t bsize, i;
+
+	n1 = get_node(s1);
+
+	if (strcmp(s1, s2) == 0)
+		return;
+
+	n2 = get_node(s2);
+
+	/*
+	 * Check if this arc is already here.
+	 */
+	for (i = 0; i < n1->n_narcs; i++)
+		if (n1->n_arcs[i] == n2)
+			return;
+	/*
+	 * Add it.
+	 */
+	if (n1->n_narcs == n1->n_arcsize) {
+		if (!n1->n_arcsize)
+			n1->n_arcsize = 10;
+		bsize = n1->n_arcsize * sizeof(*n1->n_arcs) * 2;
+		n1->n_arcs = erealloc(n1->n_arcs, bsize);
+		n1->n_arcsize = bsize / sizeof(*n1->n_arcs);
+	}
+	n1->n_arcs[n1->n_narcs++] = n2;
+	++n2->n_refcnt;
+}
+
+/* Find a node in the graph (insert if not found) and return a pointer to it. */
+static NODE *
+get_node(char *name)
+{
+	NODE *n = hash_find(&db, name);
+	size_t nlen;
+
+	if (n)
+		return n;
+
+	nlen = strlen(name) + 1;
+
+	if ((n = emalloc(sizeof(NODE) + nlen)) == NULL)
+		err(1, NULL);
+
+	n->n_narcs = 0;
+	n->n_arcsize = 0;
+	n->n_arcs = NULL;
+	n->n_refcnt = 0;
+	n->n_flags = 0;
+	(void)memcpy(n->n_name, name, nlen);
+
+	/* Add to linked list. */
+	if ((n->n_next = graph) != NULL)
+		graph->n_prevp = &n->n_next;
+	n->n_prevp = &graph;
+	graph = n;
+
+	/* Add to hash table. */
+	hash_insert(&db, name)->elem = n;
+	return n;
+}
+
+
+/*
+ * Clear the NODEST flag from all nodes.
+ */
+static void
+clear_cycle(void)
+{
+	NODE *n;
+
+	for (n = graph; n != NULL; n = n->n_next)
+		n->n_flags &= ~NF_NODEST;
+}
+
+/* do topological sort on graph */
+static void
+tsort(void)
+{
+	NODE *n, *next;
+	size_t cnt, i;
+
+	while (graph != NULL) {
+		/*
+		 * Keep getting rid of simple cases until there are none left,
+		 * if there are any nodes still in the graph, then there is
+		 * a cycle in it.
+		 */
+		do {
+			for (cnt = 0, n = graph; n != NULL; n = next) {
+				next = n->n_next;
+				if (n->n_refcnt == 0) {
+					remove_node(n);
+					++cnt;
+				}
+			}
+		} while (graph != NULL && cnt);
+
+		if (graph == NULL)
+			break;
+
+		if (!cycle_buf) {
+			/*
+			 * Allocate space for two cycle logs - one to be used
+			 * as scratch space, the other to save the longest
+			 * cycle.
+			 */
+			for (cnt = 0, n = graph; n != NULL; n = n->n_next)
+				++cnt;
+			cycle_buf = ecalloc(cnt, sizeof(*cycle_buf));
+			longest_cycle = ecalloc(cnt, sizeof(*longest_cycle));
+		}
+		for (n = graph; n != NULL; n = n->n_next) {
+			if (!(n->n_flags & NF_ACYCLIC)) {
+				if ((cnt = find_cycle(n, n, 0, 0)) != 0) {
+					if (!quiet) {
+						warnx("cycle in data");
+						for (i = 0; i < cnt; i++)
+							warnx("%s", 
+							    longest_cycle[i]->n_name);
+					}
+					remove_node(n);
+					clear_cycle();
+					break;
+				} else {
+					/* to avoid further checks */
+					n->n_flags  |= NF_ACYCLIC;
+					clear_cycle();
+				}
+			}
+		}
+		if (n == NULL)
+			errx(1, "internal error -- could not find cycle");
+	}
+}
+
+/* print node and remove from graph (does not actually free node) */
+static void
+remove_node(NODE *n)
+{
+	NODE **np;
+	size_t i;
+
+	(void)printf("%s\n", n->n_name);
+	for (np = n->n_arcs, i = n->n_narcs; i-- > 0; np++)
+		--(*np)->n_refcnt;
+	n->n_narcs = 0;
+	*n->n_prevp = n->n_next;
+	if (n->n_next)
+		n->n_next->n_prevp = n->n_prevp;
+}
+
+
+/* look for the longest? cycle from node from to node to. */
+static size_t
+find_cycle(NODE *from, NODE *to, size_t longest_len, size_t depth)
+{
+	NODE **np;
+	size_t i, len;
+
+	/*
+	 * avoid infinite loops and ignore portions of the graph known
+	 * to be acyclic
+	 */
+	if (from->n_flags & (NF_NODEST|NF_MARK|NF_ACYCLIC))
+		return 0;
+	from->n_flags |= NF_MARK;
+
+	for (np = from->n_arcs, i = from->n_narcs; i-- > 0; np++) {
+		cycle_buf[depth] = *np;
+		if (*np == to) {
+			if (depth + 1 > longest_len) {
+				longest_len = depth + 1;
+				(void)memcpy(longest_cycle, cycle_buf,
+				    longest_len * sizeof(NODE *));
+			}
+		} else {
+			if ((*np)->n_flags & (NF_MARK|NF_ACYCLIC|NF_NODEST))
+				continue;
+			len = find_cycle(*np, to, longest_len, depth + 1);
+
+			if (debug)
+				(void)printf("%*s %s->%s %zu\n", (int)depth, "",
+				    from->n_name, to->n_name, len);
+
+			if (len == 0)
+				(*np)->n_flags |= NF_NODEST;
+
+			if (len > longest_len)
+				longest_len = len;
+
+			if (len > 0 && !longest)
+				break;
+		}
+	}
+	from->n_flags &= ~NF_MARK;
+	return longest_len;
+}
+
+static void
+usage(void)
+{
+	(void)fprintf(stderr, "Usage: %s [-dlqr] [file]\n", getprogname());
+	exit(EXIT_FAILURE);
+}
