@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
@@ -71,6 +71,7 @@ const struct modes cmodes[] = {
 	{ "hup",	HUPCL },
 	{ "clocal",	CLOCAL },
 	{ "crtscts",	CRTSCTS },
+	{ "cdtrcts",	CDTRCTS },
 	{ .name = NULL },
 };
 
@@ -123,7 +124,7 @@ const struct modes lmodes[] = {
 	{ "echok",	ECHOK },
 	{ "echoke",	ECHOKE },
 	{ "crtkill",	ECHOKE },
-	{ "altwerase",	VWERASE },
+	{ "altwerase",	ALTWERASE },
 	{ "iexten",	IEXTEN },
 	{ "echonl",	ECHONL },
 	{ "echoctl",	ECHOCTL },
@@ -151,7 +152,6 @@ const struct modes omodes[] = {
 	{ "opost",	OPOST },
 	{ "onlcr",	ONLCR },
 	{ "ocrnl",	OCRNL },
-	{ "oxtabs",	TABDLY },
 	{ "onocr",	ONOCR },
 	{ "onlret",	ONLRET },
 	{ .name = NULL },
@@ -160,8 +160,6 @@ const struct modes omodes[] = {
 const struct specialmodes ospecialmodes[] = {
 	{ "litout",	0, OPOST },
 	{ "-litout",	OPOST, 0 },
-	{ "tabs",	0, TABDLY },		/* "preserve" tabs */
-	{ "-tabs",	TABDLY, 0 },
 	{ .name = NULL },
 };
 

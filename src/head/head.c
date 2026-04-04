@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -56,8 +56,6 @@ __RCSID("$NetBSD: head.c,v 1.24 2016/05/12 01:56:44 nonaka Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "nb_stdlib.h"
-
 /*
  * head - give the first few lines of a stream or of each of a set of files
  *
@@ -67,6 +65,7 @@ __RCSID("$NetBSD: head.c,v 1.24 2016/05/12 01:56:44 nonaka Exp $");
 static void head(FILE *, intmax_t, intmax_t);
 static void obsolete(char *[]);
 __dead static void usage(void);
+
 
 int
 main(int argc, char *argv[])

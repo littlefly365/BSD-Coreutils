@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/nb_cdefs.h>
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: strmode.c,v 1.19 2012/06/25 22:32:46 abs Exp $");
 #include <assert.h>
 #include <unistd.h>
 
-#include "nb_assert.h"
+#include <assert.h>
 
 #if !HAVE_STRMODE
 void

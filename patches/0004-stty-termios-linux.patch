@@ -1,0 +1,123 @@
+diff -u src/stty/cchar.c src/stty/cchar.c
+--- src/stty/cchar.c	2026-04-01 11:45:13.933726938 -0500
++++ src/stty/cchar.c	2026-04-04 11:16:03.425987868 -0500
+@@ -58,7 +58,6 @@
+  */
+ const struct cchar cchars1[] = {
+ 	{ "discard",	VDISCARD, 	CDISCARD },
+-	{ "dsusp", 	VDSUSP,		CDSUSP },
+ 	{ "eof",	VEOF,		CEOF },
+ 	{ "eol",	VEOL,		CEOL },
+ 	{ "eol2",	VEOL2,		CEOL },
+@@ -70,7 +69,6 @@
+ 	{ "quit",	VQUIT,		CQUIT },
+ 	{ "reprint",	VREPRINT, 	CREPRINT },
+ 	{ "start",	VSTART,		CSTART },
+-	{ "status",	VSTATUS, 	CSTATUS },
+ 	{ "stop",	VSTOP,		CSTOP },
+ 	{ "susp",	VSUSP,		CSUSP },
+ 	{ "time",	VTIME,		CTIME },
+diff -u src/stty/key.c src/stty/key.c
+--- src/stty/key.c	2026-04-01 11:45:13.933726938 -0500
++++ src/stty/key.c	2026-04-04 11:32:05.732866266 -0500
+@@ -320,13 +320,22 @@
+ void
+ f_ostart(struct info *ip)
+ {
+-	if (ioctl (0, TIOCSTART) < 0)
+-		err(1, "TIOCSTART");
++	struct termios t;
++	if (tcgetattr(0, &t) < 0)
++		err(1, "tcgetattr");
++	t.c_iflag |= IXON;	
++	if (tcsetattr(0, TCSANOW, &t) < 0)
++		err(1, "tcsetattr");
+ }
+ 
+ void
+ f_ostop(struct info *ip)
+ {
+-	if (ioctl (0, TIOCSTOP) < 0)
+-		err(1, "TIOCSTOP");
++	struct termios t;
++	
++	if (tcgetattr(0, &t) < 0)
++		err(1, "tcgetattr");
++	t.c_iflag &= ~IXON;	
++	if (tcsetattr(0, TCSANOW, &t) < 0)
++		err(1, "tcsetattr");
+ }
+diff -u src/stty/modes.c src/stty/modes.c
+--- src/stty/modes.c	2026-04-01 11:45:13.933726938 -0500
++++ src/stty/modes.c	2026-04-04 11:34:14.337519424 -0500
+@@ -71,7 +71,6 @@
+ 	{ "hup",	HUPCL },
+ 	{ "clocal",	CLOCAL },
+ 	{ "crtscts",	CRTSCTS },
+-	{ "mdmbuf",	MDMBUF },
+ 	{ "cdtrcts",	CDTRCTS },
+ 	{ .name = NULL },
+ };
+@@ -138,7 +137,6 @@
+ 	{ "tostop",	TOSTOP },
+ 	{ "flusho",	FLUSHO },
+ 	{ "pendin",	PENDIN },
+-	{ "nokerninfo",	NOKERNINFO },
+ 	{ .name = NULL },
+ };
+ 
+@@ -147,8 +145,6 @@
+ 	{ "-crt",	ECHOK, ECHOE|ECHOKE|ECHOCTL },
+ 	{ "newcrt",	ECHOE|ECHOKE|ECHOCTL, ECHOK|ECHOPRT },
+ 	{ "-newcrt",	ECHOK, ECHOE|ECHOKE|ECHOCTL },
+-	{ "kerninfo",	0, NOKERNINFO },
+-	{ "-kerninfo",	NOKERNINFO, 0 },
+ 	{ .name = NULL },
+ };
+ 
+@@ -156,7 +152,6 @@
+ 	{ "opost",	OPOST },
+ 	{ "onlcr",	ONLCR },
+ 	{ "ocrnl",	OCRNL },
+-	{ "oxtabs",	OXTABS },
+ 	{ "onocr",	ONOCR },
+ 	{ "onlret",	ONLRET },
+ 	{ .name = NULL },
+@@ -165,8 +160,6 @@
+ const struct specialmodes ospecialmodes[] = {
+ 	{ "litout",	0, OPOST },
+ 	{ "-litout",	OPOST, 0 },
+-	{ "tabs",	0, OXTABS },		/* "preserve" tabs */
+-	{ "-tabs",	OXTABS, 0 },
+ 	{ .name = NULL },
+ };
+ 
+diff -u src/stty/print.c src/stty/print.c
+--- src/stty/print.c	2026-04-01 11:45:13.933726938 -0500
++++ src/stty/print.c	2026-04-04 11:40:26.962411841 -0500
+@@ -105,7 +105,6 @@
+ 	put("-tostop", TOSTOP, 0);
+ 	put("-flusho", FLUSHO, 0);
+ 	put("-pendin", PENDIN, 0);
+-	put("-nokerninfo", NOKERNINFO, 0);
+ 	put("-extproc", EXTPROC, 0);
+ 
+ 	/* input flags */
+@@ -131,9 +130,6 @@
+ 	put("-opost", OPOST, 1);
+ 	put("-onlcr", ONLCR, 1);
+ 	put("-ocrnl", OCRNL, 0);
+-	put("-oxtabs", OXTABS, 1);
+-	put("-onocr", OXTABS, 0);
+-	put("-onlret", OXTABS, 0);
+ 
+ 	/* control flags (hardware state) */
+ 	tmp = tp->c_cflag;
+@@ -159,7 +155,6 @@
+ 	put("-clocal", CLOCAL, 0);
+ 	put("-cstopb", CSTOPB, 0);
+ 	put("-crtscts", CRTSCTS, 0);
+-	put("-mdmbuf", MDMBUF, 0);
+ 	put("-cdtrcts", CDTRCTS, 0);
+ 
+ 	/* special control characters */

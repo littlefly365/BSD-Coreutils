@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.49.6.1 2024/07/20 14:41:10 martin Exp $ */
+/* $NetBSD: utils.c,v 1.50 2024/01/15 17:41:06 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -29,12 +29,12 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.49.6.1 2024/07/20 14:41:10 martin Exp $");
+__RCSID("$NetBSD: utils.c,v 1.50 2024/01/15 17:41:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,9 +43,10 @@ __RCSID("$NetBSD: utils.c,v 1.49.6.1 2024/07/20 14:41:10 martin Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#ifndef _NO_ACL
+#ifndef SMALL
 #include <sys/acl.h>
 #endif
+#include <sys/extattr.h>
 
 #include <err.h>
 #include <errno.h>
@@ -59,27 +60,16 @@ __RCSID("$NetBSD: utils.c,v 1.49.6.1 2024/07/20 14:41:10 martin Exp $");
 
 #include "extern.h"
 
-#include "nb_stdlib.h"
-#include "sys/nb_param.h"
-#include "sys/nb_stat.h"
-#include "compat.h"
-
 #define	MMAP_MAX_SIZE	(8 * 1048576)
 #define	MMAP_MAX_WRITE	(64 * 1024)
-
-#ifdef _NO_ACL
-#define acl_free(x)
-#define acl_get_file	0
-#define acl_set_file	0
-#endif
 
 int
 set_utimes(const char *file, struct stat *fs)
 {
     struct timespec ts[2];
 
-    ts[0] = fs->st_atim;
-    ts[1] = fs->st_mtim;
+    ts[0] = fs->st_atimespec;
+    ts[1] = fs->st_mtimespec;
 
     if (lutimens(file, ts)) {
 	warn("lutimens: %s", file);
@@ -268,7 +258,7 @@ copy_file(FTSENT *entp, int dne)
 	if (pflag && (fcpxattr(from_fd, to_fd) != 0))
 		warn("%s: error copying extended attributes", to.p_path);
 
-#ifndef _NO_ACL
+#ifndef SMALL
 	if (pflag && preserve_fd_acls(from_fd, to_fd) != 0)
 		rval = 1;
 #endif
@@ -399,7 +389,7 @@ setfile(struct stat *fs, int fd)
 	}
 
 	if (!islink && !Nflag) {
-		unsigned long fflags = fs->st_mode;
+		unsigned long fflags = fs->st_flags;
 		/*
 		 * XXX
 		 * NFS doesn't support chflags; ignore errors unless
@@ -411,7 +401,7 @@ setfile(struct stat *fs, int fd)
 		errno = 0;
 		if ((fd ? fchflags(fd, fflags) :
 		    chflags(to.p_path, fflags)) == -1)
-			if (errno != EOPNOTSUPP || fs->st_mode != 0) {
+			if (errno != EOPNOTSUPP || fs->st_flags != 0) {
 				warn("chflags: %s", to.p_path);
 				rval = 1;
 			}
@@ -422,7 +412,7 @@ setfile(struct stat *fs, int fd)
 	return (rval);
 }
 
-#ifndef NO_ACL
+#ifndef SMALL
 int
 preserve_fd_acls(int source_fd, int dest_fd)
 {
@@ -529,11 +519,6 @@ preserve_dir_acls(struct stat *fs, char *source_dir, char *dest_dir)
 			    source_dir);
 			return (1);
 		}
-		#ifdef __linux__
-		(void)dest_dir;
-			if (acl)
-			    acl_free(acl);
-		#else
 		aclp = &acl->ats_acl;
 		if (aclp->acl_cnt != 0 && aclsetf(dest_dir,
 		    ACL_TYPE_DEFAULT, acl) < 0) {
@@ -543,7 +528,6 @@ preserve_dir_acls(struct stat *fs, char *source_dir, char *dest_dir)
 			return (1);
 		}
 		acl_free(acl);
-	#endif
 	}
 	acl = aclgetf(source_dir, acl_type);
 	if (acl == NULL) {

@@ -64,7 +64,7 @@
 #include "nbtool_config.h"
 #endif
 
-#include <sys/nb_cdefs.h>
+#include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 __RCSID("$NetBSD: strsuftoll.c,v 1.9 2011/10/22 22:08:47 christos Exp $");
@@ -87,9 +87,6 @@ __RCSID("$NetBSD: strsuftoll.c,v 1.9 2011/10/22 22:08:47 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "nb_stdlib.h"
-#include "nb_assert.h"
 
 #ifdef _LIBC
 # ifdef __weak_alias

@@ -34,7 +34,7 @@
 /* SUPPRESS 287 on yaccpar_sccsid *//* Unused static variable */
 /* SUPPRESS 288 on yyerrlab *//* Label unused */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifdef __RCSID
 __RCSID("$NetBSD: parsedate.y,v 1.37 2022/04/23 13:02:04 christos Exp $");
 #endif
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: parsedate.y,v 1.37 2022/04/23 13:02:04 christos Exp $");
 #include <time.h>
 #include <util.h>
 #include <stdlib.h>
-
-#include "nb_time.h"
 
 /* NOTES on rebuilding parsedate.c (particularly for inclusion in CVS
    releases):
@@ -790,7 +788,7 @@ static const TABLE TimeNames[] = {
 
 /* ARGSUSED */
 static int
-yyerror(struct dateinfo *param, const char **inp, const char *s __nbunused)
+yyerror(struct dateinfo *param, const char **inp, const char *s __unused)
 {
   return 0;
 }

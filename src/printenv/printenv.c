@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: printenv.c,v 1.12 2011/09/06 18:26:55 joerg Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
-
-#include "nb_stdlib.h"
 
 __dead static void usage(void);
 

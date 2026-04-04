@@ -34,8 +34,6 @@
 #ifndef _EXTERN_H_
 #define _EXTERN_H_
 
-#include <signal.h>
-
 typedef struct {
 	char *p_end;			/* pointer to NULL at end of path */
 	char *target_end;		/* pointer to end of target base */
@@ -48,7 +46,7 @@ extern int Rflag, rflag, Hflag, Lflag, Pflag, fflag, iflag, lflag, pflag, Nflag;
 extern mode_t myumask;
 extern sig_atomic_t pinfo;
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	copy_fifo(struct stat *, int);

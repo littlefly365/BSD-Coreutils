@@ -1,0 +1,14 @@
+--- date/date.c	2026-04-01 11:45:13.901485042 -0500
++++ date/date.c	2026-04-01 16:05:49.150391952 -0500
+@@ -186,9 +186,9 @@
+ 		++argv;
+ 	} else if (Rflag) {
+ 		(void)setlocale(LC_TIME, "C");
+-		format = "+%a, %-e %b %Y %H:%M:%S %z";
++		format = "+%a, %d %b %Y %H:%M:%S %z";
+ 	} else
+-		format = "+%a %b %e %H:%M:%S %Z %Y";
++		format = "+%a %d %b %Y %T %Z";
+ 
+ 	if (*argv) {
+ 		setthetime(*argv);

@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.20 2018/03/06 03:33:26 eadler Exp $");
+__RCSID("$NetBSD: tail.c,v 1.21 2023/08/07 19:11:25 tnn Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,8 +51,6 @@ __RCSID("$NetBSD: tail.c,v 1.20 2018/03/06 03:33:26 eadler Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include "extern.h"
-
-#include "nb_stdlib.h"
 
 int fflag, rflag, rval;
 const char *fname;
@@ -96,7 +94,7 @@ main(int argc, char *argv[])
 	case '+':							\
 		if (off)						\
 			off -= (units);					\
-			style = (forward);				\
+		style = (forward);					\
 		break;							\
 	case '-':							\
 		off = -off;						\

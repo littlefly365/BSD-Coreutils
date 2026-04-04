@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.57 2020/05/17 23:34:11 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.59 2024/12/11 12:56:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -32,18 +32,18 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.57 2020/05/17 23:34:11 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.59 2024/12/11 12:56:31 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#ifndef _NO_ACL
+#ifndef SMALL
 #include <sys/acl.h>
 #include <acl/libacl.h>
 #endif
@@ -65,12 +65,6 @@ __RCSID("$NetBSD: print.c,v 1.57 2020/05/17 23:34:11 christos Exp $");
 #include "ls.h"
 #include "extern.h"
 
-#include "nb_stdlib.h"
-#include "nb_unistd.h"
-#include "compat.h"
-#include "sys/nb_types.h"
-#include "sys/nb_stat.h"
-
 extern int termwidth;
 
 static int	printaname(FTSENT *, int, int);
@@ -78,13 +72,12 @@ static void	printlink(FTSENT *);
 static void	printtime(time_t);
 static void	printtotal(DISPLAY *dp);
 static int	printtype(u_int);
-#ifndef _NO_ACL
+#ifndef SMALL
 static void	aclmode(char *, const FTSENT *);
-#else
-#define acl_free(x)
 #endif
 
 static time_t	now;
+
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
 
 static int
@@ -168,7 +161,7 @@ printlong(DISPLAY *dp)
 			}
 		}
 		(void)strmode(sp->st_mode, buf);
-#ifndef _NO_ACL
+#ifndef SMALL
 		aclmode(buf, p);
 #endif
 		np = p->fts_pointer;
@@ -239,6 +232,8 @@ printcol(DISPLAY *dp)
 
 	colwidth += 1;
 
+	printtotal(dp);				/* "total: %u\n" */
+
 	if (termwidth < 2 * colwidth) {
 		printscol(dp);
 		return;
@@ -269,8 +264,6 @@ printcol(DISPLAY *dp)
 	numrows = num / numcols;
 	if (num % numcols)
 		++numrows;
-
-	printtotal(dp);				/* "total: %u\n" */
 
 	for (row = 0; row < numrows; ++row) {
 		for (base = row, chcnt = col = 0; col < numcols; ++col) {
@@ -306,6 +299,8 @@ printacol(DISPLAY *dp)
 
 	colwidth += 1;
 
+	printtotal(dp);				/* "total: %u\n" */
+
 	if (termwidth < 2 * colwidth) {
 		printscol(dp);
 		return;
@@ -313,8 +308,6 @@ printacol(DISPLAY *dp)
 
 	numcols = termwidth / colwidth;
 	colwidth = termwidth / numcols;		/* spread out if possible */
-
-	printtotal(dp);				/* "total: %u\n" */
 
 	chcnt = col = 0;
 	for (p = dp->list; p; p = p->fts_link) {
@@ -448,7 +441,8 @@ printtotal(DISPLAY *dp)
 	
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
 		if (f_humanize) {
-			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
+			if ((humanize_number(szbuf, sizeof(szbuf),
+			    dp->btotal * POSIX_BLOCK_SIZE,
 			    "", HN_AUTOSCALE,
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
@@ -513,7 +507,7 @@ printlink(FTSENT *p)
 		(void)printf("%s", path);
 }
 
-#ifndef NO_ACL
+#ifndef SMALL
 /*
  * Add a + after the standard rwxrwxrwx mode if the file has an
  * ACL. strmode() reserves space at the end of the string.
@@ -548,41 +542,33 @@ aclmode(char *buf, const FTSENT *p)
 	if (supports_acls == -1 || previous_dev != p->fts_statp->st_dev) {
 		previous_dev = p->fts_statp->st_dev;
 		supports_acls = 0;
-
+#if 0
 		ret = lpathconf(name, _PC_ACL_NFS4);
 		if (ret > 0) {
 			type = ACL_TYPE_NFS4;
 			supports_acls = 1;
 		} else if (ret < 0 && errno != EINVAL) {
+			warn("%s", name);
 			return;
 		}
+#endif
 		if (supports_acls == 0) {
-			ret = lpathconf(name, _PC_ACL_EXTENDED);
+			ret = acl_extended_file(name);
 			if (ret > 0) {
-				type = ACL_TYPE_ACCESS;
 				supports_acls = 1;
-			} else if (ret < 0 && errno != EINVAL) {
+			} else if (ret < 0 && errno != ENOTSUP) {
 				warn("%s", name);
 				return;
+			} else {
+				supports_acls = 0;
 			}
 		}
 	}
 	if (supports_acls == 0)
 		return;
-	facl = acl_get_link_np(name, type);
-	if (facl == NULL) {
-		warn("%s", name);
-		return;
-	}
-	if (acl_is_trivial_np(facl, &trivial)) {
-#ifndef _NO_ACL
-		acl_free(facl);
-		warn("%s", name);
-		return;
-#endif
-	}
+	if (trivial < 0)
+		trivial = !(acl_extended_file(name) > 1);
 	if (!trivial)
 		buf[10] = '+';
-	acl_free(facl);
 }
 #endif

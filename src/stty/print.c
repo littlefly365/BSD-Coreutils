@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
@@ -46,14 +46,14 @@ __RCSID("$NetBSD: print.c,v 1.23 2013/09/12 19:47:23 christos Exp $");
 
 #include "stty.h"
 #include "extern.h"
-#include "compat.h"
 
 static void binit(const char *);
 static void bput(const char *);
 static const char *ccval(const struct cchar *, int);
 
 void
-print(struct termios *tp, struct winsize *wp, int queue, int ldisc, enum FMT fmt)
+print(struct termios *tp, struct winsize *wp, int queue, const char *ldisc,
+    enum FMT fmt)
 {
 	const struct cchar *p;
 	long tmp;
@@ -100,7 +100,7 @@ print(struct termios *tp, struct winsize *wp, int queue, int ldisc, enum FMT fmt
 	put("-echonl", ECHONL, 0);
 	put("-echoctl", ECHOCTL, 0);
 	put("-echoprt", ECHOPRT, 0);
-	put("-altwerase", VWERASE, 0);
+	put("-altwerase", ALTWERASE, 0);
 	put("-noflsh", NOFLSH, 0);
 	put("-tostop", TOSTOP, 0);
 	put("-flusho", FLUSHO, 0);
@@ -130,9 +130,6 @@ print(struct termios *tp, struct winsize *wp, int queue, int ldisc, enum FMT fmt
 	put("-opost", OPOST, 1);
 	put("-onlcr", ONLCR, 1);
 	put("-ocrnl", OCRNL, 0);
-	put("-oxtabs", TABDLY, 1);
-	put("-onocr", TABDLY, 0);
-	put("-onlret", TABDLY, 0);
 
 	/* control flags (hardware state) */
 	tmp = tp->c_cflag;
@@ -158,6 +155,7 @@ print(struct termios *tp, struct winsize *wp, int queue, int ldisc, enum FMT fmt
 	put("-clocal", CLOCAL, 0);
 	put("-cstopb", CSTOPB, 0);
 	put("-crtscts", CRTSCTS, 0);
+	put("-cdtrcts", CDTRCTS, 0);
 
 	/* special control characters */
 	cc = tp->c_cc;

@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -54,8 +54,6 @@ __RCSID("$NetBSD: pwd.c,v 1.23 2021/11/16 16:57:15 kre Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "nb_stdlib.h"
 
 static char *getcwd_logical(void);
 __dead static void usage(void);

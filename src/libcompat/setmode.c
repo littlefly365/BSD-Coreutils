@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/nb_cdefs.h>
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
@@ -58,10 +58,6 @@ __RCSID("$NetBSD: setmode.c,v 1.38 2022/04/19 20:32:15 rillig Exp $");
 #ifdef SETMODE_DEBUG
 #include <stdio.h>
 #endif
-
-#include "nb_stdlib.h"
-#include "nb_assert.h"
-#include "sys/nb_stat.h"
 
 #ifdef __weak_alias
 __weak_alias(getmode,_getmode)

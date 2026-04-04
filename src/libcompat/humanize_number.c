@@ -30,20 +30,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 __RCSID("$NetBSD: humanize_number.c,v 1.18 2019/03/11 15:10:51 kre Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-
-#include "nb_stdlib.h"
-#include "nb_assert.h"
+#include <stdlib.h>
+#include <assert.h>
 
 int
 humanize_number(char *buf, size_t len, int64_t bytes,

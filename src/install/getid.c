@@ -64,7 +64,7 @@
 #include "nbtool_config.h"
 #endif
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 __RCSID("$NetBSD: getid.c,v 1.10 2014/10/27 21:46:45 christos Exp $");
 
 #include <sys/param.h>
@@ -79,9 +79,6 @@ __RCSID("$NetBSD: getid.c,v 1.10 2014/10/27 21:46:45 christos Exp $");
 #include <unistd.h>
 
 #include "extern.h"
-
-#include "nb_pwd.h"
-#include "sys/nb_syslimits.h"
 
 static	struct group *	gi_getgrnam(const char *);
 static	struct group *	gi_getgrgid(gid_t);

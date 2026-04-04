@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
@@ -51,9 +51,6 @@ __RCSID("$NetBSD: head.c,v 1.24 2013/01/16 15:21:42 christos Exp $");
  * Match the given string (cp) against the given template (tp).
  * Return 1 if they match, 0 if they don't
  */
-
-static int debug;
-
 static int
 cmatch(const char *cp, const char *tp)
 {

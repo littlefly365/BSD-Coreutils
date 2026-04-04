@@ -1,1 +1,0 @@
-netbsd/assert.h

@@ -1,1 +1,0 @@
-netbsd/errc.h

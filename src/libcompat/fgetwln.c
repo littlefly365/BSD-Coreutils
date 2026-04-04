@@ -24,13 +24,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/nb_cdefs.h>
+#include <sys/cdefs.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <wchar.h>
 
-//#include "local-link.h"
+#include "local-link.h"
 
 struct filewbuf {
 	FILE *fp;

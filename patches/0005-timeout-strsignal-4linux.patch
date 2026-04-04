@@ -1,0 +1,12 @@
+diff -u src/timeout/timeout.c src/timeout/timeout.c
+--- src/timeout/timeout.c	2026-04-01 11:50:38.404191950 -0500
++++ src/timeout/timeout.c	2026-04-04 12:09:30.917420442 -0500
+@@ -118,7 +118,7 @@
+ 		str += 3;
+ 
+ 		for (i = 1; i < sys_nsig; i++) {
+-			if (strcasecmp(str, sys_signame[i]) == 0)
++			if (strcasecmp(str, strsignal(i)) == 0)
+ 				return (i);
+ 		}
+ 

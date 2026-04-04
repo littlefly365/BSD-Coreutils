@@ -1,4 +1,4 @@
-/*	$NetBSD: realpath.c,v 1.2 2022/07/21 09:47:31 kre Exp $	*/
+/*	$NetBSD: realpath.c,v 1.3 2023/05/25 17:24:17 kre Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -30,12 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if !defined(lint)
 #if 0
 __FBSDID("$FreeBSD: head/bin/realpath/realpath.c 326025 2017-11-20 19:49:47Z pfg $");
 #else
-__RCSID("$NetBSD: realpath.c,v 1.2 2022/07/21 09:47:31 kre Exp $");
+__RCSID("$NetBSD: realpath.c,v 1.3 2023/05/25 17:24:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,8 +49,6 @@ __RCSID("$NetBSD: realpath.c,v 1.2 2022/07/21 09:47:31 kre Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "nb_stdlib.h"
 
 static bool process(char *path);
 static void usage(void) __dead;
@@ -134,6 +132,10 @@ process(char *path)
 
 	if (p == NULL) {
 		p = realpath(".", buf);
+		if (p == NULL) {
+			warnx("relative path; current location unknown");
+			return false;
+		}
 		if ((size_t)snprintf(buf2, sizeof buf2, "%s/%s", buf, path)
 		    >= sizeof buf2) {
 			if (!qflag)

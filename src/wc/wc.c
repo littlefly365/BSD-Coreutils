@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.35 2011/09/16 15:39:30 joerg Exp $	*/
+/*	$NetBSD: wc.c,v 1.37 2024/01/14 17:39:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.35 2011/09/16 15:39:30 joerg Exp $");
+__RCSID("$NetBSD: wc.c,v 1.37 2024/01/14 17:39:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: wc.c,v 1.35 2011/09/16 15:39:30 joerg Exp $");
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -62,10 +61,6 @@ __RCSID("$NetBSD: wc.c,v 1.35 2011/09/16 15:39:30 joerg Exp $");
 #include <unistd.h>
 #include <wchar.h>
 #include <wctype.h>
-
-#include "nb_stdlib.h"
-
-#define     MAXBSIZE         (64 * 1024)
 
 #ifdef NO_QUAD
 typedef u_long wc_count_t;
@@ -244,9 +239,10 @@ cnt(const char *file)
 				warn("%s", name);
 				rval = 1;
 			} else {
-				if (S_ISREG(sb.st_mode) ||
+				if (sb.st_size != 0 &&
+				    (S_ISREG(sb.st_mode) ||
 				    S_ISLNK(sb.st_mode) ||
-				    S_ISDIR(sb.st_mode)) {
+				    S_ISDIR(sb.st_mode))) {
 					charct = sb.st_size;
 				} else {
 					while ((len =

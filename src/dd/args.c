@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.42 2022/01/14 23:55:16 christos Exp $	*/
+/*	$NetBSD: args.c,v 1.44 2026/01/26 08:37:29 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,12 +33,12 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.42 2022/01/14 23:55:16 christos Exp $");
+__RCSID("$NetBSD: args.c,v 1.44 2026/01/26 08:37:29 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,6 @@ __RCSID("$NetBSD: args.c,v 1.42 2022/01/14 23:55:16 christos Exp $");
 
 #include "dd.h"
 #include "extern.h"
-
-#include "nb_stdlib.h"
 
 static int	c_arg(const void *, const void *);
 
@@ -250,8 +248,6 @@ f_count(char *arg)
 {
 
 	cpy_cnt = strsuftoll("block count", arg, 0, LLONG_MAX);
-	if (!cpy_cnt)
-		terminate(0);
 }
 
 static void
@@ -259,8 +255,10 @@ f_files(char *arg)
 {
 
 	files_cnt = (u_int)strsuftoll("file count", arg, 0, UINT_MAX);
-	if (!files_cnt)
-		terminate(0);
+	if (!files_cnt) {
+		summary();
+		exit(0);
+	}
 }
 
 static void

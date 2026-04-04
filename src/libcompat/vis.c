@@ -55,7 +55,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 __RCSID("$NetBSD: vis.c,v 1.75.2.1 2023/12/09 13:03:34 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
@@ -74,8 +74,6 @@ __FBSDID("$FreeBSD$");
 #include <vis.h>
 #include <wchar.h>
 #include <wctype.h>
-
-#include "nb_assert.h"
 
 #ifdef __weak_alias
 __weak_alias(strvisx,_strvisx)

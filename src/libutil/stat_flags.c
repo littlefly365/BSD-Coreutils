@@ -35,7 +35,7 @@
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
@@ -50,9 +50,7 @@ __RCSID("$NetBSD: stat_flags.c,v 1.3 2022/04/19 20:32:17 rillig Exp $");
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
-
-#include "sys/nb_stat.h"
-#include "util.h"
+#include <util.h>
 
 #define	SAPPEND(s) do {							\
 	if (prefix != NULL)						\

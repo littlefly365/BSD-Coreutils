@@ -61,7 +61,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 
 __RCSID("$NetBSD: tmp.c,v 1.16 2009/11/06 18:34:22 joerg Exp $");
 

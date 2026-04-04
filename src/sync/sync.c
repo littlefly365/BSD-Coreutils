@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -45,8 +45,6 @@ __RCSID("$NetBSD: sync.c,v 1.14 2016/09/05 01:00:07 sevan Exp $");
 
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "nb_stdlib.h"
 
 /* ARGSUSED */
 int

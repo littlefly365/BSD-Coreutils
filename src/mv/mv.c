@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: mv.c,v 1.46 2020/06/24 16:58:12 riastradh Exp $");
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/extattr.h>
 
 #include <err.h>
 #include <errno.h>
@@ -64,11 +65,6 @@ __RCSID("$NetBSD: mv.c,v 1.46 2020/06/24 16:58:12 riastradh Exp $");
 
 #include "pathnames.h"
 
-#include "nb_stdlib.h"
-#include "nb_pwd.h"
-#include "nb_unistd.h"
-#include "compat.h"
-
 static int fflg, hflg, iflg, vflg;
 static int stdin_ok;
 static sig_atomic_t pinfo;
@@ -79,7 +75,7 @@ static int	fastcopy(char *, char *, struct stat *);
 __dead static void	usage(void);
 
 static void
-progress(int sig __nbunused)
+progress(int sig __unused)
 {
 
 	pinfo++;
@@ -124,7 +120,7 @@ main(int argc, char *argv[])
 
 	stdin_ok = isatty(STDIN_FILENO);
 
-	(void)signal(SIGUSR1, progress);
+	(void)signal(SIGINFO, progress);
 
 	/*
 	 * If the stat on the target fails or the target isn't a directory,
@@ -359,6 +355,9 @@ err:		if (unlink(to))
 	}
 	if (fchmod(to_fd, sbp->st_mode))
 		warn("%s: set mode", to);
+	if (fchflags(to_fd, sbp->st_flags) && (errno != EOPNOTSUPP))
+		warn("%s: set flags (was: 0%07o)", to, sbp->st_flags);
+
 	if (close(to_fd)) {
 		warn("%s", to);
 		return (1);

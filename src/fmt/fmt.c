@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -53,9 +53,6 @@ __RCSID("$NetBSD: fmt.c,v 1.33 2017/10/13 00:11:56 christos Exp $");
 #include <string.h>
 #include <locale.h>
 #include "buffer.h"
-
-#include "nb_stdlib.h"
-#include "nb_stdio.h"
 
 /*
  * fmt -- format the concatenation of input files or standard input
@@ -195,7 +192,7 @@ getnum(const char *str, const char *what, size_t *res, int badnum)
 	errno = 0;
 	ul = strtoul(str, &ep, 0);
         if (*str != '\0' && *ep == '\0') {
-		 if ((errno == ERANGE && ul == ULONG_MAX) || ul > SIZE_MAX)
+		 if ((errno == ERANGE && ul == ULONG_MAX) || ul > SIZE_T_MAX)
 			errx(1, "%s number `%s' too big", what, str);
 		*res = (size_t)ul;
 		return 1;

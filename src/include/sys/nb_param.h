@@ -1,1 +1,0 @@
-../netbsd/sys/param.h

@@ -33,13 +33,12 @@
 #include "nbtool_config.h"
 #endif
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if !defined(lint)
 __RCSID("$NetBSD: pack_dev.c,v 1.12 2013/06/14 16:28:20 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/sysmacros.h>
 #include <sys/stat.h>
 
 #include <limits.h>
@@ -87,10 +86,10 @@ pack_netbsd(int n, u_long numbers[], const char **error)
 	dev_t dev = 0;
 
 	if (n == 2) {
-		dev = makedev(numbers[0], numbers[1]);
-		if ((u_long)major(dev) != numbers[0])
+		dev = makedev_netbsd(numbers[0], numbers[1]);
+		if ((u_long)major_netbsd(dev) != numbers[0])
 			*error = iMajorError;
-		else if ((u_long)minor(dev) != numbers[1])
+		else if ((u_long)minor_netbsd(dev) != numbers[1])
 			*error = iMinorError;
 	} else
 		*error = tooManyFields;

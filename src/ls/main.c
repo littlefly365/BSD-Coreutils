@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 
 #ifndef lint
 __RCSID("$NetBSD: main.c,v 1.5 2016/09/05 01:00:07 sevan Exp $");

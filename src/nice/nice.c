@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989\
  The Regents of the University of California.  All rights reserved.");
@@ -54,8 +54,6 @@ __RCSID("$NetBSD: nice.c,v 1.15 2008/07/21 14:19:24 lukem Exp $");
 #include <errno.h>
 #include <err.h>
 #include <unistd.h>
-
-#include "nb_stdlib.h"
 
 #define	DEFNICE	10
 

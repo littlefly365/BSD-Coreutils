@@ -34,15 +34,6 @@
 #ifndef _EXTERN_H_
 #define _EXTERN_H_
 
-#include "sys/nb_cdefs.h"
-
-#ifndef _POSIX_VDISABLE
-#define _POSIX_VDISABLE ((cc_t)'\377')
-#endif
-
-#define STTY_BSD	43
-#define _PATH_URANDOM "/dev/urandom"
-
 int	c_cchars(const void *, const void *);
 int	c_modes(const void *, const void *);
 int	csearch(char ***, struct info *);
@@ -52,7 +43,7 @@ void	gread(struct termios *, char *);
 int	ksearch(char ***, struct info *);
 int	msearch(char ***, struct info *);
 void	optlist(void);
-void	print(struct termios *, struct winsize *, int, int , enum FMT);
+void	print(struct termios *, struct winsize *, int, const char *, enum FMT);
 __dead void	usage(void);
 
 extern const struct cchar cchars1[], cchars2[];

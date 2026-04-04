@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
@@ -45,9 +45,6 @@ __RCSID("$NetBSD: nl.c,v 1.15 2020/12/31 04:07:37 ginsbach Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
-
-#include "nb_stdlib.h"
-#include "compat.h"
 
 typedef enum {
 	number_all,		/* number all lines */

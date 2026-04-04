@@ -1,1 +1,0 @@
-netbsd/utmpx.h

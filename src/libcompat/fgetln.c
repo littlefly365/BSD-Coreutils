@@ -25,7 +25,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/nb_cdefs.h>
+#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #include <string.h>

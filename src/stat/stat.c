@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $ */
+/*	$NetBSD: stat.c,v 1.55 2025/05/15 19:11:44 nia Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -35,9 +35,9 @@
 #undef HAVE_DEVNAME
 #endif
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $");
+__RCSID("$NetBSD: stat.c,v 1.55 2025/05/15 19:11:44 nia Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -48,10 +48,6 @@ __RCSID("$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $");
 #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
 #define HAVE_DEVNAME 1
 #endif /* HAVE_NBTOOL_CONFIG_H */
-
-#define st_atimensec st_atim.tv_nsec
-#define st_mtimensec st_mtim.tv_nsec
-#define st_ctimensec st_ctim.tv_nsec
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -67,12 +63,10 @@ __RCSID("$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#if HAVE_STRUCT_STAT_ST_FLAGS && !HAVE_NBTOOL_CONFIG_H
+#include <util.h>
+#endif
 #include <vis.h>
-
-#include "nb_stdlib.h"
-#include "nb_unistd.h"
-#include "sys/nb_stat.h"
-#include "sys/nb_types.h"
 
 #if HAVE_STRUCT_STAT_ST_FLAGS
 #define DEF_F "%#Xf "
@@ -231,10 +225,11 @@ main(int argc, char *argv[])
 	if (strcmp(getprogname(), "readlink") == 0) {
 		am_readlink = 1;
 		options = "fnqsv";
-		synopsis = "[-fnqsv] [file ...]";
+		synopsis = "[-fnqsv] file ...";
 		statfmt = "%Y";
 		fmtchar = 'f';
-		quiet = 1;
+		if (getenv("POSIXLY_CORRECT") == NULL)
+			quiet = 1;
 	} else {
 		options = "f:FlLnqrst:x";
 		synopsis = "[-FlLnqrsx] [-f format] [-t timefmt] [file ...]";
@@ -288,6 +283,9 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	fn = 1;
+
+	if (am_readlink && argc == 0)
+		usage(synopsis);
 
 	if (fmtchar == '\0') {
 		if (lsF)
@@ -350,10 +348,19 @@ main(int argc, char *argv[])
 		if (rc == -1) {
 			errs = 1;
 			linkfail = 1;
+			if (!quiet) {
+				if (argc == 0)
+					warn("%s: %s",
+					    "(stdin)", "fstat");
+				else
+					warn("%s: %s", argv[0],
+					    usestat ? "stat" : "lstat");
+			}
+		} else if (am_readlink && statfmt[1] == 'Y' &&
+		    (st.st_mode & S_IFMT) != S_IFLNK) {
+			linkfail = 1;
 			if (!quiet)
-				warn("%s: %s",
-				    argc == 0 ? "(stdin)" : argv[0],
-				    usestat ? "stat" : "lstat");
+				warnx("%s: Not a symbolic link", argv[0]);
 		} else
 			output(&st, argv[0], statfmt, fn, nonl, quiet);
 
@@ -819,9 +826,9 @@ format1(const struct stat *st,
 	case SHOW_st_btime:
 		if (!gottime) {
 			gottime = 1;
-			secs = 0;
+			secs = st->st_birthtime;
 #if HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC
-			nsecs = 0;
+			nsecs = st->st_birthtimensec;
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC */
 		}
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
@@ -874,18 +881,21 @@ format1(const struct stat *st,
 		break;
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	case SHOW_st_flags:
-		small = (sizeof(st->st_mode) == 4);
-		data = st->st_mode;
-		sdata = NULL;
+		small = (sizeof(st->st_flags) == 4);
+		data = st->st_flags;
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX;
+#if !HAVE_NBTOOL_CONFIG_H
+		sdata = flags_to_string((u_long)st->st_flags, "-");
+		formats |= FMT_STRING;
+#endif
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
 #endif /* HAVE_STRUCT_STAT_ST_FLAGS */
 #if HAVE_STRUCT_STAT_ST_GEN
 	case SHOW_st_gen:
-		small = 1;
-		data = 0;
+		small = (sizeof(st->st_gen) == 4);
+		data = st->st_gen;
 		sdata = NULL;
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX;
 		if (ofmt == 0)
@@ -1068,11 +1078,11 @@ format1(const struct stat *st,
 		errx(1, "%.*s: bad format", (int)flen, fmt);
 	}
 
-	/*
-	 * If a subdatum was specified but not supported, or an output
-	 * format was selected that is not supported, that's an error.
-	 */
-	if (hilo != 0 || (ofmt & formats) == 0)
+	if (hilo != 0			// subdatum not supported
+	    || !(ofmt & formats)	// output format not supported
+	    || (ofmt == FMTF_STRING && flags & FLAG_SPACE)
+	    || (ofmt == FMTF_STRING && flags & FLAG_PLUS)
+	    || (ofmt == FMTF_STRING && flags & FLAG_ZERO))
 		errx(1, "%.*s: bad format", (int)flen, fmt);
 
 	/*
@@ -1080,7 +1090,7 @@ format1(const struct stat *st,
 	 * First prefixlen chars are not encoded.
 	 */
 	if ((flags & FLAG_POUND) != 0 && ofmt == FMTF_STRING) {
-		flags &= !FLAG_POUND;
+		flags &= ~FLAG_POUND;
 		strncpy(visbuf, sdata, prefixlen);
 		/* Avoid GCC warnings. */
 		visbuf[prefixlen] = 0;

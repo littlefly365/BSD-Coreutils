@@ -39,7 +39,7 @@
  * Erik E. Fair <fair@clock.org>, May 8, 1997
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 __RCSID("$NetBSD: strpct.c,v 1.3 2012/01/07 18:40:56 christos Exp $");
 
 #include <stdint.h>

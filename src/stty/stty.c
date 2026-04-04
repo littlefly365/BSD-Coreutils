@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -57,8 +57,6 @@ __RCSID("$NetBSD: stty.c,v 1.24 2019/09/06 16:28:53 christos Exp $");
 
 #include "stty.h"
 #include "extern.h"
-#include "nb_stdlib.h"
-#include "compat.h"
 
 int
 main(int argc, char *argv[])
@@ -101,10 +99,12 @@ args:	argc -= optind;
 
 	if (tcgetattr(i.fd, &i.t) < 0)
 		err(1, "tcgetattr");
+	if (ioctl(i.fd, TIOCGLINED, i.ldisc) < 0)
+		warn("TIOCGLINED");
 	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
 		warn("TIOCGWINSZ");
-	if (ioctl(i.fd, FIONREAD, &i.queue) < 0)
-		warn("FIONREAD");
+	if (ioctl(i.fd, TIOCGQSIZE, &i.queue) < 0)
+		warn("TIOCGQSIZE");
 
 	switch(fmt) {
 	case STTY_NOTSET:

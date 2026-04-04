@@ -29,11 +29,11 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
@@ -42,23 +42,18 @@ __RCSID("$NetBSD: fts.c,v 1.52 2022/04/19 20:32:15 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 
 #include <assert.h>
-#include <errno.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <fts.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "fts.h"
-#include "nb_stdlib.h"
-#include "nb_assert.h"
-
-#define SQRT_SIZE_MAX (((size_t)1) << (sizeof(size_t) * CHAR_BIT / 2))
 
 #if ! HAVE_NBTOOL_CONFIG_H
 #define	HAVE_STRUCT_DIRENT_D_NAMLEN
@@ -769,7 +764,11 @@ fts_build(FTS *sp, int type)
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
+#if defined(HAVE_STRUCT_DIRENT_D_NAMLEN)
+		dnamlen = dp->d_namlen;
+#else
 		dnamlen = strlen(dp->d_name);
+#endif
 		if ((p = fts_alloc(sp, dp->d_name, dnamlen)) == NULL)
 			goto mem1;
 		if (dnamlen >= maxlen) {	/* include space for NUL */
@@ -1241,4 +1240,3 @@ bail:
 	}
 	return ret;
 }
-

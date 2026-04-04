@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1980, 1990, 1993, 1994\
@@ -68,8 +68,6 @@ __RCSID("$NetBSD: df.c,v 1.101.2.1 2023/12/18 14:17:42 martin Exp $");
 #include <mntent.h>
 #include <util.h>
 
-#include "nb_stdlib.h"
-#include "sys/nb_stat.h"
 #include "compat.h"
 
 struct mntinfo {
@@ -602,8 +600,8 @@ prtstat(struct mntinfo *sfps, int maxwidth)
 			(void)printf(" Mounted on\n");
 		}
 	}
-	used = (uint64_t)sfps->f_blocks - (uint64_t)sfps->f_bfree;
-	bavail = (uint64_t)sfps->f_bavail;
+	used = sfps->f_blocks;
+	bavail = sfps->f_bavail;
 	availblks = bavail + used;
 	if (Pflag) {
 		assert(hflag == 0);
@@ -728,7 +726,6 @@ getmntinfo(struct mntinfo **mntbuf)
         cur->f_dev = st.st_dev;
 
         cur->f_selected = 1;
-
         n++;
     }
 

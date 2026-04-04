@@ -1,1 +1,0 @@
-netbsd/locale.h

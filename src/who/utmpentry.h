@@ -29,9 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include "nb_utmpx.h"
-
 #if defined(SUPPORT_UTMPX)
 # include <utmpx.h>
 # define WHO_NAME_LEN		_UTX_USERSIZE

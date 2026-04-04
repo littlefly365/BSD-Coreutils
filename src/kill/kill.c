@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(SHELL)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -56,9 +56,6 @@ __RCSID("$NetBSD: kill.c,v 1.33 2022/05/16 10:53:14 kre Exp $");
 #include <unistd.h>
 #include <locale.h>
 #include <sys/ioctl.h>
-
-#include "nb_stdlib.h"
-#include "compat.h"
 
 #ifdef SHELL            /* sh (aka ash) builtin */
 int killcmd(int, char *argv[]);
@@ -111,7 +108,7 @@ main(int argc, char *argv[])
 					numsig -= 128;
 				if (numsig == 0 || signalnext(numsig) == -1)
 					nosig(sn);
-				sn = strsignal(numsig);
+				sn = signalname(numsig);
 				if (sn == NULL)
 					errx(EXIT_FAILURE,
 					   "unknown signal number: %d", numsig);
@@ -290,7 +287,7 @@ printsignals(FILE *fp, int len)
 		pad = 1;
 
 	for (sig = 0; (sig = signalnext(sig)) != 0; ) {
-		name = strsignal(sig);
+		name = signalname(sig);
 		if (name == NULL)
 			continue;
 

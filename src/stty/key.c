@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
@@ -37,6 +37,7 @@ static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 __RCSID("$NetBSD: key.c,v 1.22 2017/01/10 20:44:05 christos Exp $");
 #endif
 #endif /* not lint */
+
 #include <sys/types.h>
 
 #include <err.h>
@@ -51,7 +52,6 @@ __RCSID("$NetBSD: key.c,v 1.22 2017/01/10 20:44:05 christos Exp $");
 
 #include "stty.h"
 #include "extern.h"
-#include "compat.h"
 
 __BEGIN_DECLS
 void	f_all(struct info *);
@@ -282,11 +282,11 @@ f_rows(struct info *ip)
 void
 f_sane(struct info *ip)
 {
-	ip->t.c_cflag = TTYDEF_CFLAG | (ip->t.c_cflag & (CLOCAL|CRTSCTS));
+	ip->t.c_cflag = TTYDEF_CFLAG | (ip->t.c_cflag & (CLOCAL|CRTSCTS|CDTRCTS));
 	ip->t.c_iflag = TTYDEF_IFLAG;
 	ip->t.c_iflag |= ICRNL;
 	/* preserve user-preference flags in lflag */
-#define	LKEEP	(ECHOKE|ECHOE|ECHOK|ECHOPRT|ECHOCTL|VWERASE|TOSTOP|NOFLSH)
+#define	LKEEP	(ECHOKE|ECHOE|ECHOK|ECHOPRT|ECHOCTL|ALTWERASE|TOSTOP|NOFLSH)
 	ip->t.c_lflag = TTYDEF_LFLAG | (ip->t.c_lflag & LKEEP);
 	ip->t.c_oflag = TTYDEF_OFLAG;
 	ip->set = 1;
@@ -321,7 +321,6 @@ void
 f_ostart(struct info *ip)
 {
 	struct termios t;
-	
 	if (tcgetattr(0, &t) < 0)
 		err(1, "tcgetattr");
 	t.c_iflag |= IXON;	

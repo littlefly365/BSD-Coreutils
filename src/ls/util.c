@@ -31,8 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include "sys/nb_cdefs.h"
+#define _XOPEN_SOURCE 700
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
@@ -69,7 +69,7 @@ safe_print(const char *src)
 		flags |= VIS_CSTYLE;
 
 	len = strlen(src);
-	if (len != 0 && SIZE_MAX/len <= 4) {
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
 		errx(EXIT_FAILURE, "%s: name too long", src);
 		/* NOTREACHED */
 	}

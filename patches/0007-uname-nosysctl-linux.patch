@@ -1,0 +1,26 @@
+--- src/uname/uname.c	2026-04-01 11:50:38.410270827 -0500
++++ src/uname/uname.c	2026-04-04 12:31:09.535317767 -0500
+@@ -41,6 +41,7 @@
+ #include <locale.h>
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include <unistd.h>
+ #include <err.h>
+ 
+@@ -112,13 +113,8 @@
+ 		err(EXIT_FAILURE, "uname");
+ 		/* NOTREACHED */
+ 	}
+-	if (print_mask & PRINT_MACHINE_ARCH) {
+-		int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
+-		size_t len = sizeof (machine_arch);
+-
+-		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,
+-		    &len, NULL, 0) < 0)
+-			err(EXIT_FAILURE, "sysctl");
++	if (print_mask & PRINT_MACHINE_ARCH) { 
++		strlcpy(machine_arch, MACHINE_ARCH, sizeof(machine_arch));
+ 	}
+ 
+ 	if (print_mask & PRINT_SYSNAME) {

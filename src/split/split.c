@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.27 2017/01/10 21:14:13 christos Exp $	*/
+/*	$NetBSD: split.c,v 1.33 2024/02/09 22:08:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.27 2017/01/10 21:14:13 christos Exp $");
+__RCSID("$NetBSD: split.c,v 1.33 2024/02/09 22:08:38 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,16 +54,13 @@ __RCSID("$NetBSD: split.c,v 1.27 2017/01/10 21:14:13 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "nb_stdlib.h"
-#include "sys/nb_param.h"
-#include "sys/nb_stat.h"
-
 #define DEFLINE	1000		/* Default num lines per file. */
 
-static int file_open;		/* If a file open. */
+static int file_open;		/* If a file is open. */
 static int ifd = STDIN_FILENO, ofd = -1; /* Input/output file descriptors. */
 static char *fname;		/* File name prefix. */
-static size_t sfxlen = 2;		/* suffix length. */
+static size_t sfxlen = 2;	/* Suffix length. */
+static int autosfx = 1;		/* Whether to auto-extend the suffix length. */
 
 static void newfile(void);
 static void split1(off_t, int) __dead;
@@ -82,7 +79,7 @@ main(int argc, char *argv[])
 	off_t numlines = 0;	/* Line count to split on. */
 	off_t chunks = 0;	/* Number of chunks to split into. */
 
-	while ((ch = getopt(argc, argv, "0123456789b:l:a:n:")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789a:b:l:n:")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -98,14 +95,21 @@ main(int argc, char *argv[])
 					p = argv[optind] + 1;
 				numlines = strtoull(p, &ep, 10);
 				if (numlines == 0 || *ep != '\0')
-					errx(1, "%s: illegal line count.", p);
+					errx(EXIT_FAILURE, "%s: illegal line count.", p);
 			}
+			break;
+		case 'a':		/* Suffix length. */
+			if (!isdigit((unsigned char)optarg[0]) ||
+			    (sfxlen = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
+			    *ep != '\0')
+				errx(EXIT_FAILURE, "%s: illegal suffix length.", optarg);
+			autosfx = 0;
 			break;
 		case 'b':		/* Byte count. */
 			if (!isdigit((unsigned char)optarg[0]) ||
 			    (bytecnt = strtoull(optarg, &ep, 10)) == 0 ||
 			    (*ep != '\0' && *ep != 'k' && *ep != 'm'))
-				errx(1, "%s: illegal byte count.", optarg);
+				errx(EXIT_FAILURE, "%s: illegal byte count.", optarg);
 			if (*ep == 'k')
 				bytecnt *= 1024;
 			else if (*ep == 'm')
@@ -117,19 +121,13 @@ main(int argc, char *argv[])
 			if (!isdigit((unsigned char)optarg[0]) ||
 			    (numlines = strtoull(optarg, &ep, 10)) == 0 ||
 			    *ep != '\0')
-				errx(1, "%s: illegal line count.", optarg);
-			break;
-		case 'a':		/* Suffix length. */
-			if (!isdigit((unsigned char)optarg[0]) ||
-			    (sfxlen = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
-			    *ep != '\0')
-				errx(1, "%s: illegal suffix length.", optarg);
+				errx(EXIT_FAILURE, "%s: illegal line count.", optarg);
 			break;
 		case 'n':		/* Chunks. */
 			if (!isdigit((unsigned char)optarg[0]) ||
 			    (chunks = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
 			    *ep != '\0')
-				errx(1, "%s: illegal number of chunks.", optarg);
+				errx(EXIT_FAILURE, "%s: illegal number of chunks.", optarg);
 			break;
 		default:
 			usage();
@@ -140,7 +138,7 @@ main(int argc, char *argv[])
 	if (*argv != NULL) {
 		if (strcmp(*argv, "-") != 0 &&
 		    (ifd = open(*argv, O_RDONLY, 0)) < 0)
-			err(1, "%s", *argv);
+			err(EXIT_FAILURE, "%s", *argv);
 		++argv;
 	}
 
@@ -189,10 +187,10 @@ split1(off_t bytecnt, int maxcnt)
 	for (bcnt = 0;;)
 		switch (len = read(ifd, bfr, MAXBSIZE)) {
 		case 0:
-			exit(0);
+			exit(EXIT_SUCCESS);
 			/* NOTREACHED */
 		case -1:
-			err(1, "read");
+			err(EXIT_FAILURE, "read");
 			/* NOTREACHED */
 		default:
 			if (!file_open) {
@@ -206,7 +204,7 @@ split1(off_t bytecnt, int maxcnt)
 				/* LINTED: bytecnt - bcnt <= len */
 				dist = bytecnt - bcnt;
 				if (bigwrite(ofd, bfr, dist) != (size_t)dist)
-					err(1, "write");
+					err(EXIT_FAILURE, "write");
 				len -= dist;
 				for (C = bfr + dist; len >= bytecnt;
 				    /* LINTED: bytecnt <= len */
@@ -218,7 +216,7 @@ split1(off_t bytecnt, int maxcnt)
 					/* LINTED: as above */
 					if (bigwrite(ofd,
 					    C, bytecnt) != (size_t)bytecnt)
-						err(1, "write");
+						err(EXIT_FAILURE, "write");
 				}
 				if (len) {
 					if (!maxcnt || (nfiles < maxcnt)) {
@@ -227,7 +225,7 @@ split1(off_t bytecnt, int maxcnt)
 					}
 					/* LINTED: len >= 0 */
 					if (bigwrite(ofd, C, len) != (size_t)len)
-						err(1, "write");
+						err(EXIT_FAILURE, "write");
 				} else
 					file_open = 0;
 				bcnt = len;
@@ -235,7 +233,7 @@ split1(off_t bytecnt, int maxcnt)
 				bcnt += len;
 				/* LINTED: len >= 0 */
 				if (bigwrite(ofd, bfr, len) != (size_t)len)
-					err(1, "write");
+					err(EXIT_FAILURE, "write");
 			}
 		}
 }
@@ -256,10 +254,10 @@ split2(off_t numlines)
 	for (lcnt = 0;;)
 		switch (len = read(ifd, bfr, MAXBSIZE)) {
 		case 0:
-			exit(0);
+			exit(EXIT_SUCCESS);
 			/* NOTREACHED */
 		case -1:
-			err(1, "read");
+			err(EXIT_FAILURE, "read");
 			/* NOTREACHED */
 		default:
 			if (!file_open) {
@@ -270,7 +268,7 @@ split2(off_t numlines)
 				if (*Ce == '\n' && ++lcnt == numlines) {
 					bcnt = Ce - Cs + 1;
 					if (bigwrite(ofd, Cs, bcnt) != (size_t)bcnt)
-						err(1, "write");
+						err(EXIT_FAILURE, "write");
 					lcnt = 0;
 					Cs = Ce + 1;
 					if (len)
@@ -281,7 +279,7 @@ split2(off_t numlines)
 			if (Cs < Ce) {
 				bcnt = Ce - Cs;
 				if (bigwrite(ofd, Cs, bcnt) != (size_t)bcnt)
-					err(1, "write");
+					err(EXIT_FAILURE, "write");
 			}
 		}
 }
@@ -296,12 +294,12 @@ split3(off_t chunks)
 	struct stat sb;
 
 	if (fstat(ifd, &sb) == -1) {
-		err(1, "stat");
+		err(EXIT_FAILURE, "stat");
 		/* NOTREACHED */
 	}
 
 	if (chunks > sb.st_size) {
-		errx(1, "can't split into more than %d files",
+		errx(EXIT_FAILURE, "can't split into more than %d files",
 				(int)sb.st_size);
 		/* NOTREACHED */
 	}
@@ -324,18 +322,50 @@ newfile(void)
 		fpnt = fname + strlen(fname);
 		fpnt[sfxlen] = '\0';
 	} else if (close(ofd) != 0)
-		err(1, "%s", fname);
+		err(EXIT_FAILURE, "%s", fname);
 
 	quot = fnum;
+
+	/* If '-a' is not specified, then we automatically expand the
+	 * suffix length to accommodate splitting all input.  We do this
+	 * by moving the suffix pointer (fpnt) forward and incrementing
+	 * sfxlen by one, thereby yielding an additional two characters
+	 * and allowing all output files to sort such that 'cat *' yields
+	 * the input in order.  I.e., the order is '... xyy xyz xzaaa
+	 * xzaab ... xzyzy, xzyzz, xzzaaaa, xzzaaab' and so on. */
+	if (autosfx && (fpnt[0] == 'y') && (strspn(fpnt+1, "z") == strlen(fpnt+1))) {
+		if ((fname = realloc(fname, strlen(fname) + sfxlen + 2 + 1)) == NULL)
+			err(EXIT_FAILURE, NULL);
+			/* NOTREACHED */
+
+		fpnt = fname + strlen(fname) - sfxlen;
+		fpnt[sfxlen + 2] = '\0';
+
+		fpnt[0] = 'z';
+		fpnt[1] = 'a';
+
+		/*  Basename | Suffix
+		 *  before:
+		 *  x        | yz
+		 *  after:
+		 *  xz       | a.. */
+		fpnt++;
+		sfxlen++;
+
+		/* Reset so we start back at all 'a's in our extended suffix. */
+		quot = 0;
+		fnum = 0;
+	}
+
 	for (i = sfxlen - 1; i >= 0; i--) {
 		fpnt[i] = quot % 26 + 'a';
 		quot = quot / 26;
 	}
 	if (quot > 0)
-		errx(1, "too many files.");
+		errx(EXIT_FAILURE, "too many files.");
 	++fnum;
 	if ((ofd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, DEFFILEMODE)) < 0)
-		err(1, "%s", fname);
+		err(EXIT_FAILURE, "%s", fname);
 }
 
 static size_t
@@ -362,5 +392,5 @@ usage(void)
 	(void)fprintf(stderr,
 "usage: %s [-b byte_count] [-l line_count] [-n chunk_count] [-a suffix_length] "
 "[file [prefix]]\n", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }

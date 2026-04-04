@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.53 2019/10/04 08:57:37 mrg Exp $	*/
+/*	$NetBSD: dd.c,v 1.54 2026/01/26 08:37:29 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.53 2019/10/04 08:57:37 mrg Exp $");
+__RCSID("$NetBSD: dd.c,v 1.54 2026/01/26 08:37:29 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,6 @@ __RCSID("$NetBSD: dd.c,v 1.53 2019/10/04 08:57:37 mrg Exp $");
 
 #include "dd.h"
 #include "extern.h"
-
-#include "nb_stdlib.h"
 
 static void dd_close(void);
 static void dd_in(void);
@@ -138,10 +136,10 @@ main(int argc, char *argv[])
 #endif
 	setup();
 
-	(void)signal(SIGUSR1, summaryx);
+	(void)signal(SIGINFO, summaryx);
 	(void)signal(SIGINT, terminate);
 	(void)sigemptyset(&infoset);
-	(void)sigaddset(&infoset, SIGUSR1);
+	(void)sigaddset(&infoset, SIGINFO);
 
 	(void)atexit(summary);
 
@@ -371,7 +369,7 @@ dd_in(void)
 	int64_t n;
 
 	for (flags = ddflags;;) {
-		if (cpy_cnt && (st.in_full + st.in_part) >= cpy_cnt)
+		if ((flags & C_COUNT) && (st.in_full + st.in_part) >= cpy_cnt)
 			return;
 
 		/*

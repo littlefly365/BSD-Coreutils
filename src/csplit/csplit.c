@@ -45,7 +45,7 @@
  * assumption about the input.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __RCSID("$NetBSD: csplit.c,v 1.7 2017/07/30 23:02:53 cheusov Exp $");
 #endif
@@ -66,9 +66,6 @@ __RCSID("$NetBSD: csplit.c,v 1.7 2017/07/30 23:02:53 cheusov Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#include "nb_stdlib.h"
-#include "nb_regex.h"
-
 static void	 cleanup(void);
 static void	 do_lineno(const char *);
 static void	 do_rexp(const char *);
@@ -77,7 +74,7 @@ static void	 handlesig(int);
 static FILE	*newfile(void);
 static void	 toomuch(FILE *, long);
 static void	 usage(void) __dead;
-static int raise_default_signal(int rump);
+
 /*
  * Command line options
  */
@@ -479,10 +476,4 @@ do_lineno(const char *expr)
 			break;
 		lastline += tgtline;
 	}
-}
-
-static int
-raise_default_signal(int rump)
-{
-return 0;
 }

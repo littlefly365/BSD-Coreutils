@@ -35,14 +35,12 @@
  * NetBSD: src/common/lib/libc/stdlib/_strtoul.h,v 1.7 2013/05/17 12:55:56 joe…
  */
 
-#include <sys/nb_cdefs.h>
+#include <sys/cdefs.h>
 
 #include <stddef.h>
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-
-#define _DIAGASSERT(t)
 
 uintmax_t
 strtou(const char *__restrict nptr,

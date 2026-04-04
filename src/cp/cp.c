@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.62 2020/05/22 14:54:30 christos Exp $ */
+/* $NetBSD: cp.c,v 1.63 2024/06/07 21:01:00 andvar Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1988, 1993, 1994\
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.62 2020/05/22 14:54:30 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.63 2024/06/07 21:01:00 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,6 @@ __RCSID("$NetBSD: cp.c,v 1.62 2020/05/22 14:54:30 christos Exp $");
 
 #include "extern.h"
 
-#include "nb_stdlib.h"
-
 #define	STRIP_TRAILING_SLASH(p) {					\
         while ((p).p_end > (p).p_path + 1 && (p).p_end[-1] == '/')	\
                 *--(p).p_end = '\0';					\
@@ -98,7 +96,7 @@ enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 static int copy(char *[], enum op, int);
 
 static void
-progress(int sig __nbunused)
+progress(int sig __unused)
 {
 
 	pinfo++;
@@ -220,7 +218,7 @@ main(int argc, char *argv[])
 	/* Set end of argument list for fts(3). */
 	argv[argc] = NULL;     
 	
-	(void)signal(SIGUSR1, progress);
+	(void)signal(SIGINFO, progress);
 	
 	/*
 	 * Cp has two distinct cases:
@@ -377,7 +375,7 @@ copy(char *argv[], enum op type, int fts_options)
 			 * is the case where the target exists.
 			 *
 			 * Also, check for "..".  This is for correct path
-			 * concatentation for paths ending in "..", e.g.
+			 * concatenation for paths ending in "..", e.g.
 			 *	cp -R .. /tmp
 			 * Paths ending in ".." are changed to ".".  This is
 			 * tricky, but seems the easiest way to fix the problem.
@@ -513,7 +511,7 @@ copy(char *argv[], enum op type, int fts_options)
 				if (pflag) {
 					if (setfile(curr->fts_statp, 0))
 						this_failed = any_failed = 1;
-#ifndef _NO_ACL 
+#ifndef SMALL
 					if (preserve_dir_acls(curr->fts_statp,
 					    curr->fts_accpath, to.p_path) != 0)
 						this_failed = any_failed = 1;

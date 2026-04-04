@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.63.2.2 2024/10/14 17:44:57 martin Exp $ */
+/* $NetBSD: date.c,v 1.70 2024/09/17 15:25:39 kre Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -33,7 +33,7 @@
 #include "nbtool_config.h"
 #endif
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1985, 1987, 1988, 1993\
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.63.2.2 2024/10/14 17:44:57 martin Exp $");
+__RCSID("$NetBSD: date.c,v 1.70 2024/09/17 15:25:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,6 @@ __RCSID("$NetBSD: date.c,v 1.63.2.2 2024/10/14 17:44:57 martin Exp $");
 #endif
 
 #include "extern.h"
-
-#include "nb_stdlib.h"
 
 static time_t tval;
 static int Rflag, aflag, jflag, rflag, nflag;
@@ -98,11 +96,14 @@ main(int argc, char *argv[])
 	int ch;
 	long long val;
 	struct tm *tm;
+	char *default_tz;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ad:f:jnRr:u")) != -1) {
+	default_tz = getenv("TZ");
+
+	while ((ch = getopt(argc, argv, "ad:f:jnRr:Uuz:")) != -1) {
 		switch (ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
@@ -153,8 +154,20 @@ main(int argc, char *argv[])
 			rflag = 1;
 			tval = (time_t)val;
 			break;
+		case 'U':		/* reset to default timezone */
+			if (default_tz)
+				(void)setenv("TZ", default_tz, 1);
+			else
+				(void)unsetenv("TZ");
+			break;
 		case 'u':		/* do everything in UTC */
 			(void)setenv("TZ", "UTC0", 1);
+			break;
+		case 'z':
+			if (optarg[0] == '\0')
+				(void)unsetenv("TZ");
+			else
+				(void)setenv("TZ", optarg, 1);
 			break;
 		default:
 			usage();
@@ -360,6 +373,23 @@ setthetime(const char *p)
 				strlen(t), t);
 		goto setit;
 	}
+	if (getenv("POSIXLY_CORRECT") != NULL) {
+		int yrdigs;
+		const char * const e = "Bad POSIX format date ``%s''";
+
+		t = strptime(p, "%m%d%H%M", lt);
+		if (t == NULL)
+			errx(EXIT_FAILURE, e, p);
+		if (*t != '\0') {
+			yrdigs = strspn(t, "0123456789");
+			if (yrdigs != 2 && yrdigs != 4)
+				errx(EXIT_FAILURE, e, p);
+			t = strptime(t, yrdigs == 2 ? "%y" : "%Y", lt);
+			if (t == NULL || *t != '\0')
+				errx(EXIT_FAILURE, e, p);
+		}
+		goto setit;
+	}
 #endif
 	for (t = p, dot = NULL; *t; ++t) {
 		if (*t == '.') {
@@ -505,8 +535,7 @@ setit:
 	struct utmpx utx;
 	memset(&utx, 0, sizeof(utx));
 	utx.ut_type = OLD_TIME;
-	utx.ut_pid = getpid();
-	time_t ti = time(NULL);
+	(void)gettimeofday(&utx.ut_tv, NULL);
 	pututxline(&utx);
 
 	if (nflag || netsettime(new_time)) {
@@ -526,8 +555,9 @@ setit:
 		logwtmp("{", "date", "");
 	}
 	utx.ut_type = NEW_TIME;
-	utx.ut_pid = getpid();
+	(void)gettimeofday(&utx.ut_tv, NULL);
 	pututxline(&utx);
+
 	if ((p = getlogin()) == NULL)
 		p = "???";
 	syslog(LOG_AUTH | LOG_NOTICE, "date set by %s", p);
@@ -540,9 +570,10 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-ajnRu] [-d date] [-r seconds] [+format]",
+	    "Usage: %s [-ajnRUu] [-d date] [-r seconds] [-z zone] [+format]",
 	    getprogname());
-	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
+	(void)fprintf(stderr, "\n\t%*s[[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n",
+	    (int)strlen(getprogname()), "");
 	(void)fprintf(stderr,
 	    "       %s [-ajnRu] -f input_format new_date [+format]\n",
 	    getprogname());

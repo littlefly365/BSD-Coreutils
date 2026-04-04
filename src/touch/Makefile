@@ -1,4 +1,5 @@
 PROG=touch
 
-LDADD += -lnutil
+LDADD += -lnutil -lm
+
 .include "../../mk/prog.mk"

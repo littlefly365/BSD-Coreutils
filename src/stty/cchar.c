@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: cchar.c,v 1.16 2006/10/16 00:37:55 christos Exp $");
 
 #include "stty.h"
 #include "extern.h"
-#include "compat.h"
 
 /*
  * Special control characters.

@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.33 2015/10/09 17:51:26 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.34 2024/01/14 17:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,12 +32,12 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.33 2015/10/09 17:51:26 christos Exp $");
+__RCSID("$NetBSD: forward.c,v 1.34 2024/01/14 17:37:32 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,8 +54,6 @@ __RCSID("$NetBSD: forward.c,v 1.33 2015/10/09 17:51:26 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include "extern.h"
-
-#include "nb_stdlib.h"
 
 static int rlines(FILE *, off_t, struct stat *);
 
@@ -98,7 +96,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	case FBYTES:
 		if (off == 0)
 			break;
-		if (S_ISREG(sbp->st_mode)) {
+		if (S_ISREG(sbp->st_mode) && sbp->st_size > 0) {
 			if (sbp->st_size < off)
 				off = sbp->st_size;
 			if (fseeko(fp, off, SEEK_SET) == -1) {
@@ -130,7 +128,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 		}
 		break;
 	case RBYTES:
-		if (S_ISREG(sbp->st_mode)) {
+		if (S_ISREG(sbp->st_mode) && sbp->st_size > 0) {
 			if (sbp->st_size >= off &&
 			    fseeko(fp, -off, SEEK_END) == -1) {
 				ierr();
@@ -148,7 +146,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 		}
 		break;
 	case RLINES:
-		if (S_ISREG(sbp->st_mode)) {
+		if (S_ISREG(sbp->st_mode) && sbp->st_size > 0) {
 			if (!off) {
 				if (fseek(fp, 0L, SEEK_END) == -1) {
 					ierr();

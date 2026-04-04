@@ -34,6 +34,7 @@
 #ifndef _MTREE_H_
 #define	_MTREE_H_
 
+#include <stdio.h>
 #include <sys/types.h>
 
 #define	KEYDEFAULT	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | \

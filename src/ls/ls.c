@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.77.6.1 2024/07/20 14:46:10 martin Exp $	*/
+/*	$NetBSD: ls.c,v 1.79 2024/12/11 12:56:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.77.6.1 2024/07/20 14:46:10 martin Exp $");
+__RCSID("$NetBSD: ls.c,v 1.79 2024/12/11 12:56:31 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,11 +67,6 @@ __RCSID("$NetBSD: ls.c,v 1.77.6.1 2024/07/20 14:46:10 martin Exp $");
 
 #include "ls.h"
 #include "extern.h"
-
-#include "nb_stdlib.h"
-#include "nb_pwd.h"
-#include "compat.h"
-#include "sys/nb_types.h"
 
 static void	 display(FTSENT *, FTSENT *);
 static int	 mastercmp(const FTSENT **, const FTSENT **);
@@ -156,25 +151,6 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	
-	if (strcmp(getprogname(), "dir") == 0) {
-		f_column = 1;
-                f_columnacross = f_longform = f_singlecol = f_stream = 0;
-
-		f_nonprint = 0;
-                f_octal = 0;
-              	f_octal_escape = 1;
-	}
-	else if (strcmp(getprogname(), "vdir") == 0) {
-		f_longform = 1;
-                f_column = f_columnacross = f_singlecol = f_stream = 0;
-                f_grouponly = -1;
-
-		f_nonprint = 0;
-                f_octal = 0;
-              	f_octal_escape = 1;
-	}
-
 	while ((ch = getopt(argc, argv, "1AaBbCcdFfghikLlMmnOoPpqRrSsTtuWwXx"))
 	    != -1) {
 		switch (ch) {
@@ -371,7 +347,7 @@ ls_main(int argc, char *argv[])
 	if (f_inode || f_longform || f_size) {
 		if (!kflag)
 			(void)getbsize(NULL, &blocksize);
-		blocksize /= 512;
+		blocksize /= POSIX_BLOCK_SIZE;
 	}
 
 	/* Select a sort function. */
@@ -519,7 +495,7 @@ display(FTSENT *p, FTSENT *list)
 	DISPLAY d;
 	FTSENT *cur;
 	NAMES *np;
-	uint64_t btotal, stotal;
+	u_int64_t btotal;
 	off_t maxsize;
 	blkcnt_t maxblock;
 	ino_t maxinode;
@@ -548,7 +524,7 @@ display(FTSENT *p, FTSENT *list)
 	maxinode = maxnlink = 0;
 	bcfile = 0;
 	maxuser = maxgroup = maxflags = maxlen = 0;
-	btotal = stotal = maxblock = maxsize = 0;
+	btotal = maxblock = maxsize = 0;
 	maxmajor = maxminor = 0;
 	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
 		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
@@ -597,7 +573,6 @@ display(FTSENT *p, FTSENT *list)
 			}
 
 			btotal += sp->st_blocks;
-			stotal += sp->st_size;
 			if (f_longform) {
 				if (f_numericonly ||
 				    (user = user_from_uid(sp->st_uid, 0)) ==
@@ -619,7 +594,7 @@ display(FTSENT *p, FTSENT *list)
 					maxgroup = glen;
 				if (f_flags) {
 					flags =
-					    flags_to_string((u_long)0, "-");
+					    flags_to_string((u_long)sp->st_flags, "-");
 					if ((flen = strlen(flags)) > maxflags)
 						maxflags = flen;
 				} else
@@ -653,7 +628,6 @@ display(FTSENT *p, FTSENT *list)
 	d.maxlen = maxlen;
 	if (needstats) {
 		d.btotal = btotal;
-		d.stotal = stotal;
 		if (f_humanize) {
 			d.s_block = 4; /* min buf length for humanize_number */
 		} else {

@@ -1,1 +1,0 @@
-netbsd/pwd.h

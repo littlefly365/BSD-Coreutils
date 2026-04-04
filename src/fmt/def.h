@@ -40,7 +40,6 @@
 #ifndef __DEF_H__
 #define __DEF_H__
 
-#include "sys/nb_cdefs.h"
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -360,6 +359,11 @@ struct var {
 	struct	var *v_link;		/* Forward link to next variable */
 	char	*v_name;		/* The variable's name */
 	char	*v_value;		/* And its current value */
+};
+
+struct group {
+	struct	group *ge_link;		/* Next person in this group */
+	char	*ge_name;		/* This person's user name */
 };
 
 struct grouphead {

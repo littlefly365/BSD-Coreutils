@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
-#include "nb_errc.h"
+#include <sys/cdefs.h>
+#include <err.h>
 
 #include <err.h>
 #include <stdarg.h>

@@ -1,0 +1,10 @@
+--- src/ls/cmp.c	2026-04-03 17:15:44.916599411 -0500
++++ src/ls/cmp.c	2026-04-03 17:16:43.825006669 -0500
+@@ -32,6 +32,7 @@
+  * SUCH DAMAGE.
+  */
+ 
++#define _POSIX_SOURCE
+ #include <sys/cdefs.h>
+ #ifndef lint
+ #if 0

@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
@@ -67,12 +67,6 @@ static void quiet_summary(void);
 
 static void buffer_write(const char *, size_t, int);
 #endif /* NO_MSGFMT */
-
-int
-raise_default_signal(int rump)
-{
-return 0;
-}
 
 void
 summary(void)
@@ -343,5 +337,4 @@ quiet_summary(void)
 
 	/* stay quiet */
 }
-
 #endif /* NO_MSGFMT */

@@ -33,7 +33,7 @@
 #include "nbtool_config.h"
 #endif
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: verrc.c,v 1.3 2014/06/06 11:38:41 joerg Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "nb_stdlib.h"
 
 #ifdef __weak_alias
 __weak_alias(verrc, _verrc)

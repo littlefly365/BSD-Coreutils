@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -42,7 +42,6 @@ __RCSID("$NetBSD: id.c,v 1.32 2011/09/16 15:39:26 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/types.h>
 
 #include <err.h>
 #include <errno.h>
@@ -52,8 +51,6 @@ __RCSID("$NetBSD: id.c,v 1.32 2011/09/16 15:39:26 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "nb_stdlib.h"
 
 static void current(void);
 static void pretty(struct passwd *);

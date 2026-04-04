@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/nb_cdefs.h>
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 __RCSID("$NetBSD: utimens.c,v 1.2 2019/09/16 01:25:16 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */

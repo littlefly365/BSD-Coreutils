@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
@@ -54,8 +54,6 @@ __RCSID("$NetBSD: logwtmp.c,v 1.14 2003/08/07 16:44:59 agc Exp $");
 #include <utmp.h>
 #include <util.h>
 #include <fcntl.h>
-
-#include "nb_assert.h"
 
 void
 logwtmp(const char *line, const char *name, const char *host)

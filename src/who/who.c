@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -64,7 +64,6 @@ __RCSID("$NetBSD: who.c,v 1.25 2015/11/21 15:01:43 christos Exp $");
 #endif
 
 #include "utmpentry.h"
-#include "nb_stdlib.h"
 
 static void output_labels(void);
 static void who_am_i(const char *, int);
@@ -237,7 +236,7 @@ who_am_i(const char *fname, int show_labels)
 
 		/* strip directory prefixes for ttys */
 		if ((t = strrstr(p, "/pts/")) != NULL ||
-		    (t = strrchr((char *)p, '/')) != NULL)
+		    (t = strrchr(p, '/')) != NULL)
 			p = t + 1;
 
 		(void)getutentries(fname, &ehead);

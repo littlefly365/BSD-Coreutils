@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -55,11 +55,6 @@ __RCSID("$NetBSD: sleep.c,v 1.30 2019/03/10 15:18:45 kre Exp $");
 #include <time.h>
 #include <unistd.h>
 
-#include "nb_stdlib.h"
-#include "nb_locale.h"
-#include "sys/nb_time.h"
-#include "compat.h"
-
 __dead static void alarmhandle(int);
 __dead static void usage(void);
 
@@ -67,7 +62,7 @@ static void report(const time_t, const time_t, const char *const);
 
 static volatile sig_atomic_t report_requested;
 static void
-report_request(int signo __nbunused)
+report_request(int signo __unused)
 {
 
 	report_requested = 1;
@@ -188,7 +183,7 @@ main(int argc, char *argv[])
 	    endtime.tv_nsec <= now.tv_nsec))
 		errx(EXIT_FAILURE, "cannot sleep beyond the end of time");
 
-	signal(SIGUSR1, report_request);
+	signal(SIGINFO, report_request);
 	for (;;) {
 		int e;
 

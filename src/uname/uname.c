@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __RCSID("$NetBSD: uname.c,v 1.11 2011/09/06 18:35:13 joerg Exp $");
 #endif /* not lint */
@@ -45,9 +45,8 @@ __RCSID("$NetBSD: uname.c,v 1.11 2011/09/06 18:35:13 joerg Exp $");
 #include <unistd.h>
 #include <err.h>
 
+#include <sys/sysctl.h>
 #include <sys/utsname.h>
-
-#include "nb_stdlib.h"
 
 __dead static void usage(void);
 
@@ -65,7 +64,7 @@ int
 main(int argc, char **argv)
 {
 	struct utsname u;
-	char machine_arch[65];
+	char machine_arch[SYS_NMLN];
 	int c;
 	int space = 0;
 	int print_mask = 0;
@@ -114,21 +113,10 @@ main(int argc, char **argv)
 		err(EXIT_FAILURE, "uname");
 		/* NOTREACHED */
 	}
-	if (print_mask & PRINT_MACHINE_ARCH) {
-	#if defined(__linux__)
-    	struct utsname u;
-    		if (uname(&u) == 0) {
-		        strlcpy(machine_arch, u.machine, sizeof(machine_arch));
-		    }
-	#else
-		int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
-		size_t len = sizeof (machine_arch);
+	if (print_mask & PRINT_MACHINE_ARCH) { 
+		strlcpy(machine_arch, MACHINE_ARCH, sizeof(machine_arch));
+	}
 
-		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,
-		    &len, NULL, 0) < 0)
-			err(EXIT_FAILURE, "sysctl");
-	#endif
-		}
 	if (print_mask & PRINT_SYSNAME) {
 		space++;
 		fputs(u.sysname, stdout);

@@ -36,7 +36,7 @@
 #include "nbtool_config.h"
 #endif
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: tsort.c,v 1.26 2021/02/06 16:02:16 dbj Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "nb_stdlib.h"
 #if !HAVE_NBTOOL_CONFIG_H
 #include <util.h>
 #endif

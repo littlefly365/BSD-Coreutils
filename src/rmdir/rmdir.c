@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.27.14.1 2025/05/15 18:04:05 martin Exp $ */
+/* $NetBSD: rmdir.c,v 1.28 2025/05/12 06:21:56 kim Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.27.14.1 2025/05/15 18:04:05 martin Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.28 2025/05/12 06:21:56 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,6 @@ __RCSID("$NetBSD: rmdir.c,v 1.27.14.1 2025/05/15 18:04:05 martin Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "nb_stdlib.h"
 
 static int vflag;
 

@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "sys/nb_cdefs.h"
+#include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989\
  The Regents of the University of California.  All rights reserved.");
@@ -52,8 +52,6 @@ __RCSID("$NetBSD: nohup.c,v 1.15 2011/09/06 18:24:15 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
-#include "nb_stdlib.h"
 
 static void dofile(void);
 __dead static void usage(void);
